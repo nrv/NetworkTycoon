@@ -18,7 +18,9 @@
  */
 package name.herve.networktycoon;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -27,18 +29,59 @@ import java.util.TreeSet;
  */
 public class Network implements Iterable<Node> {
 	private Set<Node> nodes;
+	private List<Connection> connections;
 
 	public Network() {
 		super();
 		nodes = new TreeSet<Node>();
+		connections = new ArrayList<Connection>();
 	}
 
-	public void addNode(Node e) {
+	public Connection addConnection(Node n1, Node n2) {
+		Connection c = new Connection(n1, n2);
+		n1.addConnection(c, n2);
+		n2.addConnection(c, n1);
+		connections.add(c);
+		return c;
+	}
+
+	public Network addNode(Node e) {
 		nodes.add(e);
+		return this;
+	}
+
+	public List<Connection> getConnections() {
+		return connections;
+	}
+
+	public int getNbConnections() {
+		return connections.size();
+	}
+
+	public int getNbNodes() {
+		return nodes.size();
 	}
 
 	@Override
 	public Iterator<Node> iterator() {
 		return nodes.iterator();
+	}
+
+	public void removeConnection(Connection c) {
+		for (Node n : c) {
+			n.removeConnection(c);
+		}
+		connections.remove(c);
+	}
+
+	public void removeNode(Node n) {
+		List<Connection> toRemove = new ArrayList<Connection>();
+		for (Connection c : n) {
+			toRemove.add(c);
+		}
+		for (Connection c : toRemove) {
+			removeConnection(c);
+		}
+		nodes.remove(n);
 	}
 }

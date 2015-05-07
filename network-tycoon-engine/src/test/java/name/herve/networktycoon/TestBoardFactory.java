@@ -8,14 +8,12 @@ import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.Iterator;
 
 import javax.imageio.ImageIO;
 
 import name.herve.bastod.tools.math.Dimension;
 import name.herve.bastod.tools.math.Point;
-import name.herve.networktycoon.delaunay.Pnt;
-import name.herve.networktycoon.delaunay.Triangle;
-import name.herve.networktycoon.delaunay.Triangulation;
 import name.herve.networktycoon.gui.BoardGuiTool;
 
 public class TestBoardFactory {
@@ -31,28 +29,23 @@ public class TestBoardFactory {
 	}
 
 	public static void main(String[] args) {
-		Dimension[] screens = new Dimension[] { new Dimension(640, 480), new Dimension(1024, 768), new Dimension(1280, 1024), new Dimension(1920, 1080) };
+		// Dimension[] screens = new Dimension[] { new Dimension(640, 480), new
+		// Dimension(1024, 768), new Dimension(1280, 1024), new Dimension(1920,
+		// 1080) };
+		Dimension[] screens = new Dimension[] { new Dimension(1024, 768) };
 		int rb = 200;
 		int rr = 100;
+		int nb = 10;
 		File tempDir = new File("/tmp");
 
 		try {
-			BoardFactory bf = new BoardFactory();
-			Board b = bf.getRandomBoard();
+			for (int i = 0; i < nb; i++) {
+				BoardFactory bf = new BoardFactory();
+				Board b = bf.getRandomBoard();
 
-			int top = -2 * b.getH();
-			int bottom = 2 * b.getH();
-			int middle = b.getW() / 2;
-			int left = -b.getW();
-			int right = 2 * b.getW();
-			Triangulation delaunay = new Triangulation(new Triangle(new Pnt(left, bottom).setOutsideWorld(true), new Pnt(right, bottom).setOutsideWorld(true), new Pnt(middle, top).setOutsideWorld(true)));
-
-			for (Node n : b.getNetwork()) {
-				delaunay.delaunayPlace(new Pnt(n.getX(), n.getY()));
-			}
-
-			for (Dimension s : screens) {
-				for (boolean doReserve : new boolean[] { false, true }) {
+				for (Dimension s : screens) {
+					// for (boolean doReserve : new boolean[] { false, true }) {
+					boolean doReserve = false;
 					BoardGuiTool tool = null;
 
 					if (doReserve) {
@@ -68,30 +61,24 @@ public class TestBoardFactory {
 					g2.setColor(Color.WHITE);
 					g2.fillRect(0, 0, s.getW(), s.getH());
 
+//					g2.setColor(Color.GREEN);
+//					for (int l = 0; l <= b.getH(); l++) {
+//						Point p1 = tool.pointToScreen(new Point(0, l));
+//						Point p2 = tool.pointToScreen(new Point(b.getW(), l));
+//						g2.drawLine(p1.getX(), p1.getY(), p2.getX(), p2.getY());
+//					}
+//					for (int c = 0; c <= b.getW(); c++) {
+//						Point p1 = tool.pointToScreen(new Point(c, 0));
+//						Point p2 = tool.pointToScreen(new Point(c, b.getH()));
+//						g2.drawLine(p1.getX(), p1.getY(), p2.getX(), p2.getY());
+//					}
+
 					g2.setColor(Color.BLUE);
-					for (int l = 0; l <= b.getH(); l++) {
-						Point p1 = tool.pointToScreen(new Point(0, l));
-						Point p2 = tool.pointToScreen(new Point(b.getW(), l));
+					for (Connection c : b.getNetwork().getConnections()) {
+						Iterator<Node> itn = c.iterator();
+						Point p1 = tool.boardPointToScreen(itn.next().getCoord());
+						Point p2 = tool.boardPointToScreen(itn.next().getCoord());
 						g2.drawLine(p1.getX(), p1.getY(), p2.getX(), p2.getY());
-					}
-					for (int c = 0; c <= b.getW(); c++) {
-						Point p1 = tool.pointToScreen(new Point(c, 0));
-						Point p2 = tool.pointToScreen(new Point(c, b.getH()));
-						g2.drawLine(p1.getX(), p1.getY(), p2.getX(), p2.getY());
-					}
-
-					g2.setColor(Color.GREEN);
-					for (Triangle triangle : delaunay) {
-						Pnt[] vertices = triangle.toArray(new Pnt[0]);
-
-						for (int i = 0; i < vertices.length; i++) {
-							int j = i == vertices.length - 1 ? 0 : i + 1;
-							if (!vertices[i].isOutsideWorld() && !vertices[j].isOutsideWorld()) {
-								Point p1 = tool.boardPointToScreen(new Point((int) vertices[i].coord(0), (int) vertices[i].coord(1)));
-								Point p2 = tool.boardPointToScreen(new Point((int) vertices[j].coord(0), (int) vertices[j].coord(1)));
-								g2.drawLine(p1.getX(), p1.getY(), p2.getX(), p2.getY());
-							}
-						}
 					}
 
 					g2.setColor(Color.RED);
@@ -107,8 +94,9 @@ public class TestBoardFactory {
 						g2.fill(new Rectangle(s.getW() - rr, 0, rr, s.getH()));
 					}
 
-					ImageIO.write(img, "jpeg", new File(tempDir, "tbf_" + (doReserve ? "x" : "") + "_" + s.getW() + "x" + s.getH() + ".jpg"));
+					ImageIO.write(img, "jpeg", new File(tempDir, "tbf_" + i + "_" + (doReserve ? "x" : "") + "_" + s.getW() + "x" + s.getH() + ".jpg"));
 				}
+				// }
 			}
 
 		} catch (Exception e) {

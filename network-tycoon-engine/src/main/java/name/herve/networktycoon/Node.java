@@ -19,14 +19,16 @@
 package name.herve.networktycoon;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import name.herve.bastod.tools.math.Point;
 
 /**
  * @author Nicolas HERVE
  */
-public class Node implements Comparable<Node> {
+public class Node implements Comparable<Node>, Iterable<Connection> {
 	private int id;
 	private String name;
 	private Point coord;
@@ -68,6 +70,16 @@ public class Node implements Comparable<Node> {
 		return true;
 	}
 
+	public Connection getConnectionTo(Node other) {
+		for (Entry<Connection, Node> e : connections.entrySet()) {
+			if (e.getValue().equals(other)) {
+				return e.getKey();
+			}
+		}
+
+		return null;
+	}
+
 	public Point getCoord() {
 		return coord;
 	}
@@ -78,6 +90,10 @@ public class Node implements Comparable<Node> {
 
 	public String getName() {
 		return name;
+	}
+
+	public int getNbConnections() {
+		return connections.size();
 	}
 
 	public int getX() {
@@ -94,6 +110,19 @@ public class Node implements Comparable<Node> {
 		int result = 1;
 		result = (prime * result) + id;
 		return result;
+	}
+
+	public boolean isConnectedTo(Node other) {
+		return getConnectionTo(other) != null;
+	}
+
+	@Override
+	public Iterator<Connection> iterator() {
+		return connections.keySet().iterator();
+	}
+
+	public void removeConnection(Connection c) {
+		connections.remove(c);
 	}
 
 	public void setX(int x) {
