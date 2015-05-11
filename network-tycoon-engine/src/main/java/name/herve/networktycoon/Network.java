@@ -21,19 +21,17 @@ package name.herve.networktycoon;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * @author Nicolas HERVE
  */
 public class Network implements Iterable<Node> {
-	private Set<Node> nodes;
+	private List<Node> nodes;
 	private List<Connection> connections;
 
 	public Network() {
 		super();
-		nodes = new TreeSet<Node>();
+		nodes = new ArrayList<Node>();
 		connections = new ArrayList<Connection>();
 	}
 
@@ -60,6 +58,10 @@ public class Network implements Iterable<Node> {
 
 	public int getNbNodes() {
 		return nodes.size();
+	}
+
+	public List<Node> getNodes() {
+		return nodes;
 	}
 
 	@Override

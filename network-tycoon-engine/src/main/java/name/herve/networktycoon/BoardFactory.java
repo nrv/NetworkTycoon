@@ -18,27 +18,36 @@
  */
 package name.herve.networktycoon;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import name.herve.bastod.tools.GameException;
+import name.herve.bastod.tools.graph.Dijkstra;
+import name.herve.bastod.tools.graph.Graph;
 import name.herve.bastod.tools.math.Dimension;
+import name.herve.bastod.tools.math.Vector;
 import name.herve.networktycoon.delaunay.Pnt;
 import name.herve.networktycoon.delaunay.Triangle;
 import name.herve.networktycoon.delaunay.Triangulation;
+import name.herve.networktycoon.gui.BoardGuiTool;
 
 /**
  * @author Nicolas HERVE
  */
 public class BoardFactory {
-	private final static Dimension DEFAULT_BOARD_DIMENSION = new Dimension(20, 15);
+	private final static Dimension DEFAULT_BOARD_DIMENSION = new Dimension(200, 150);
 	private final static double ANGLE_LIMIT = Math.PI / 6;
 	private final static int NB_RESOURCES = 4;
 	private final static int NB_NODES = 15;
-	private final static int CLOSE_RANGE = 1;
-	private final static int MAX_RANGE = 4;
+	private final static int CLOSE_RANGE = 10;
+	private final static int MAX_RANGE = 40;
 
 	private final static String[] DEFAULT_RESOURCE_TYPES = new String[] { "*", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K" };
 
@@ -51,6 +60,151 @@ public class BoardFactory {
 
 	private Board createBoard() throws GameException {
 		return new Board(DEFAULT_BOARD_DIMENSION);
+	}
+
+	private void doPathDuplicate(Board b) {
+		Network network = b.getNetwork();
+		Graph g = new Graph();
+		Map<Node, name.herve.bastod.tools.graph.Node> map1 = new HashMap<Node, name.herve.bastod.tools.graph.Node>();
+		Map<name.herve.bastod.tools.graph.Node, Node> map2 = new HashMap<name.herve.bastod.tools.graph.Node, Node>();
+		Map<Connection, Integer> count = new HashMap<Connection, Integer>();
+		for (Node n : network) {
+			name.herve.bastod.tools.graph.Node nn = new name.herve.bastod.tools.graph.Node();
+			map1.put(n, nn);
+			map2.put(nn, n);
+			g.addNode(nn);
+		}
+		for (Connection c : network.getConnections()) {
+			g.addEdge(map1.get(c.getNode1()), map1.get(c.getNode2()), c.getNbResourceNeeded());
+			count.put(c, 0);
+		}
+		
+		Dijkstra dijkstra = new Dijkstra(g);
+		for (int i = 0; i < network.getNbNodes() - 1; i++) {
+			Node ni = network.getNodes().get(i);
+			for (int j = i + 1; j < network.getNbNodes(); j++) {
+				Node nj = network.getNodes().get(j);
+				List<name.herve.bastod.tools.graph.Node> path = dijkstra.getPathNodes(map1.get(ni), map1.get(nj));
+
+				Node p = ni;
+				for (name.herve.bastod.tools.graph.Node cp : path) {
+					Node n = map2.get(cp);
+					Connection c = p.getConnectionTo(n);
+					count.put(c, count.get(c) + 1);
+					p = n;
+				}
+			}
+		}
+		
+		int limit = (int)(0.08 * network.getNbNodes() * (network.getNbNodes() - 1) / 2);
+		for (Connection c : network.getConnections()) {
+//			System.out.println(c + " - " + count.get(c) + " / " + limit);
+			if (count.get(c) >= limit) {
+				c.setNbPath(2);
+			}
+		}
+	}
+	
+	private void doGraphLayout(Board b) {
+		Random rd = new Random(seed);
+		
+		BoardGuiTool debugTool = new BoardGuiTool(b.getDimension(), new Dimension(1024, 768));
+		Network network = b.getNetwork();
+
+		Map<Node, Vector> coord = new HashMap<Node, Vector>();
+		for (Node u : network) {
+			Vector cu = new Vector(u.getX(), u.getY());
+			System.out.println("n " + u.getId() + " : " + cu);
+			coord.put(u, cu);
+		}
+		Map<Connection, Float> springs = new HashMap<Connection, Float>();
+		for (Connection c : network.getConnections()) {
+			springs.put(c, (float) c.getNbResourceNeeded() * 15);
+			// springs.put(c, (float) c.distance());
+		}
+
+		for (int i = 0; i < 100; i++) {
+			try {
+				debugTool.debug(b, new File("/tmp/nt/tbf_" + seed + "_" + i + ".jpg"));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+			Map<Node, Vector> forces = new HashMap<Node, Vector>();
+			for (Node u : network) {
+				Vector cu = coord.get(u);
+				Vector fu = new Vector(0, 0);
+				forces.put(u, fu);
+				for (Node v : network) {
+					if (u == v) {
+						continue;
+					}
+					Vector cv = coord.get(v);
+					Vector fuv = cv.copy().remove(cu);
+					// Vector fuv = cu.copy().remove(cv);
+					float duv = fuv.length();
+					if (duv == 0) {
+						fuv = new Vector(10 * rd.nextFloat(), 10 * rd.nextFloat());
+						duv = fuv.length();
+					}
+//					System.out.println(i + " : " + u.getId() + "<-" + v.getId() + "         ~ fuv 1 " + fuv + " (" + duv + ")");
+					fuv.normalize();
+					float force = 0;
+					if (u.isConnectedTo(v)) {
+						Connection c = u.getConnectionTo(v);
+						float spring = springs.get(c);
+						force = (float) (2 * Math.log10(spring)) * (duv - spring);
+//						System.out.println(i + " : " + u.getId() + "<-" + v.getId() + "         ~ force c  " + force + " / " + spring);
+					} else {
+						force = 100 / (duv * duv);
+//						System.out.println(i + " : " + u.getId() + "<-" + v.getId() + "         ~ force nc " + force);
+					}
+
+					fuv.multiply(force);
+//					System.out.println(i + " : " + u.getId() + "<-" + v.getId() + "         ~ fuv 2 " + fuv);
+					fu.add(fuv);
+//					System.out.println();
+				}
+			}
+			for (Node u : network) {
+				Vector cu = coord.get(u);
+				Vector fu = forces.get(u);
+//				System.out.println(i + "~ f " + fu);
+				cu.add(fu.multiply(0.1f));
+//				System.out.println(i + "~ n " + u.getId() + " : " + cu);
+
+				u.setX(cu.getXInt());
+				u.setY(cu.getYInt());
+			}
+		}
+
+		for (Node n : network) {
+			Vector cn = coord.get(n);
+//			System.out.println("n " + n.getId() + " : " + cn);
+			n.setX(cn.getXInt());
+			n.setY(cn.getYInt());
+		}
+	}
+
+	public void doResources(Board board, int nbResourceTypes) {
+		for (int r = 0; r < nbResourceTypes; r++) {
+			ResourceType resourceType = new ResourceType(DEFAULT_RESOURCE_TYPES[r]);
+			if (r == 0) {
+				resourceType.setJocker(true);
+			}
+			board.registerResourceType(resourceType);
+		}
+	}
+
+	private void doShuffle(Board b) {
+		Random rd = new Random(seed);
+		Network network = b.getNetwork();
+		int x = b.getW() / 10;
+		int y = b.getH() / 10;
+		for (Node u : network) {
+			u.setX(u.getX() + rd.nextInt(2 * x) - x);
+			u.setY(u.getY() + rd.nextInt(2 * y) - y);
+		}
 	}
 
 	public Board getEmptyBoard() throws GameException {
@@ -70,13 +224,7 @@ public class BoardFactory {
 		int maxNeighbourRange = MAX_RANGE;
 
 		// Resources
-		for (int r = 0; r < nbResourceTypes; r++) {
-			ResourceType resourceType = new ResourceType(DEFAULT_RESOURCE_TYPES[r]);
-			if (r == 0) {
-				resourceType.setJocker(true);
-			}
-			board.registerResourceType(resourceType);
-		}
+		doResources(board, nbResourceTypes);
 
 		// Nodes
 		int top = -5 * board.getH();
@@ -187,7 +335,83 @@ public class BoardFactory {
 			if (remove) {
 				network.removeConnection(c);
 			}
-		} while (network.getNbConnections() > (2 * network.getNbNodes()));
+		} while (network.getNbConnections() > (1.8 * network.getNbNodes()));
+
+		// Resources
+		double maxDist = 0;
+		for (Connection c : network.getConnections()) {
+			double d = c.distance();
+			if (d > maxDist) {
+				maxDist = d;
+			}
+		}
+
+		double d = 0;
+		double r = 0;
+		for (Connection c : network.getConnections()) {
+			c.setNbResourceNeeded((int) Math.max(1, Math.floor((6 * c.distance()) / maxDist)));
+			d += c.distance();
+			r += c.getNbResourceNeeded();
+		}
+
+//		System.out.println("d = " + (d / network.getConnections().size()));
+//		System.out.println("r = " + (r / network.getConnections().size()));
+//		System.out.println("avg = " + (d / r));
+		
+//		doShuffle(board);
+//		doGraphLayout(board);
+		
+		// Duplicate important path
+		doPathDuplicate(board);
+		
+		return board;
+	}
+
+	public Board getSampleBoard() throws GameException {
+		Board board = getEmptyBoard();
+
+		doResources(board, 6);
+
+		Network network = board.getNetwork();
+
+		Node[] nodes = new Node[6];
+		for (int n = 0; n < nodes.length; n++) {
+			nodes[n] = new Node(n, "n" + n);
+			network.addNode(nodes[n]);
+		}
+
+		nodes[0].setX(board.getW() / 2);
+		nodes[0].setY((2 * board.getH()) / 6);
+
+		nodes[1].setX(board.getW() / 4);
+		nodes[1].setY(board.getH() / 6);
+
+		nodes[2].setX((3 * board.getW()) / 4);
+		nodes[2].setY(board.getH() / 6);
+
+		network.addConnection(nodes[0], nodes[2]).setNbResourceNeeded(2);
+		network.addConnection(nodes[0], nodes[1]).setNbResourceNeeded(2);
+		network.addConnection(nodes[2], nodes[1]).setNbResourceNeeded(2);
+
+		nodes[3].setX(board.getW() / 2);
+		nodes[3].setY((4 * board.getH()) / 6);
+
+		nodes[4].setX(board.getW() / 4);
+		nodes[4].setY((5 * board.getH()) / 6);
+
+		nodes[5].setX((3 * board.getW()) / 4);
+		nodes[5].setY((5 * board.getH()) / 6);
+
+		network.addConnection(nodes[3], nodes[4]).setNbResourceNeeded(2);
+		network.addConnection(nodes[3], nodes[5]).setNbResourceNeeded(2);
+		network.addConnection(nodes[4], nodes[5]).setNbResourceNeeded(2);
+
+		network.addConnection(nodes[0], nodes[3]).setNbResourceNeeded(1);
+
+//		doShuffle(board);
+//		doGraphLayout(board);
+		
+		doPathDuplicate(board);
 
 		return board;
 	}

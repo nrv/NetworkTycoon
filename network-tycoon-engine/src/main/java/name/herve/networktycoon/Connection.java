@@ -18,26 +18,30 @@
  */
 package name.herve.networktycoon;
 
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.List;
 
 /**
  * @author Nicolas HERVE
  */
 public class Connection implements Iterable<Node> {
-	private Set<Node> nodes;
-	private ResourceType resourceType;
+	private List<Node> nodes;
+	private List<ResourceType> resourceTypes;
+	private int nbResourceNeeded;
+	private int nbPath;
 
 	public Connection() {
 		super();
-		nodes = new TreeSet<Node>();
+		nodes = new ArrayList<Node>();
+		resourceTypes = new ArrayList<ResourceType>();
 	}
 
 	public Connection(Node n1, Node n2) {
 		this();
 		add(n1);
 		add(n2);
+		setNbPath(1);
 	}
 
 	public Connection add(Node e) {
@@ -45,8 +49,29 @@ public class Connection implements Iterable<Node> {
 		return this;
 	}
 
-	public ResourceType getResourceType() {
-		return resourceType;
+	public Connection addResourceType(ResourceType resourceType) {
+		resourceTypes.add(resourceType);
+		return this;
+	}
+
+	public double distance() {
+		return Math.sqrt(Math.pow(nodes.get(0).getX() - nodes.get(1).getX(), 2) + Math.pow(nodes.get(0).getY() - nodes.get(1).getY(), 2));
+	}
+
+	public int getNbPath() {
+		return nbPath;
+	}
+
+	public int getNbResourceNeeded() {
+		return nbResourceNeeded;
+	}
+
+	public Node getNode1() {
+		return nodes.get(0);
+	}
+
+	public Node getNode2() {
+		return nodes.get(1);
 	}
 
 	@Override
@@ -54,8 +79,16 @@ public class Connection implements Iterable<Node> {
 		return nodes.iterator();
 	}
 
-	public Connection setResourceType(ResourceType resourceType) {
-		this.resourceType = resourceType;
-		return this;
+	public void setNbPath(int nbPath) {
+		this.nbPath = nbPath;
+	}
+
+	public void setNbResourceNeeded(int nbResourceNeeded) {
+		this.nbResourceNeeded = nbResourceNeeded;
+	}
+
+	@Override
+	public String toString() {
+		return "Connection [" + getNode1().getId() + "->" + getNode2().getId() + ", nbResourceNeeded=" + nbResourceNeeded + ", nbPath=" + nbPath + "]";
 	}
 }
