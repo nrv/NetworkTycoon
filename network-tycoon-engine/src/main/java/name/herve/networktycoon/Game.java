@@ -18,6 +18,8 @@
  */
 package name.herve.networktycoon;
 
+import java.util.List;
+
 import name.herve.bastod.tools.conf.Configuration;
 
 /**
@@ -25,6 +27,7 @@ import name.herve.bastod.tools.conf.Configuration;
  */
 public class Game {
 	private Board board;
+	private List<Player> players;
 	private Configuration conf;
 	private int turn;
 }

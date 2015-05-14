@@ -16,17 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with Network Tycoon. If not, see <http://www.gnu.org/licenses/>.
  */
-package name.herve.networktycoon;
+package name.herve.networktycoon.engine;
 
-import java.util.List;
-import java.util.Map;
+import name.herve.networktycoon.Game;
 
 /**
  * @author Nicolas HERVE
  */
-public class Player {
-	private int index;
-	private String name;
-	private String color;
-	private Map<ResourceType, List<Resource>> resources;
+public class Engine {
+	private Game game;
+	
 }

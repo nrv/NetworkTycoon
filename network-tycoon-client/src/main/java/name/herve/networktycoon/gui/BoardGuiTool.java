@@ -1,3 +1,21 @@
+/*
+ * Copyright 2015 Nicolas HERVE
+ *
+ * This file is part of Network Tycoon.
+ *
+ * Network Tycoon is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Network Tycoon is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Network Tycoon. If not, see <http://www.gnu.org/licenses/>.
+ */
 package name.herve.networktycoon.gui;
 
 import java.awt.Color;
@@ -19,7 +37,11 @@ import name.herve.bastod.tools.math.Vector;
 import name.herve.networktycoon.Board;
 import name.herve.networktycoon.Connection;
 import name.herve.networktycoon.Node;
+import name.herve.networktycoon.ResourceType;
 
+/**
+ * @author Nicolas HERVE
+ */
 public class BoardGuiTool {
 	private final static RenderingHints HINTS;
 
@@ -39,10 +61,14 @@ public class BoardGuiTool {
 	private Dimension screen;
 
 	public BoardGuiTool(Dimension board, Dimension screen) {
-		this(board, screen, 0, 0, 0, 0);
+		this(board, screen, false);
 	}
 
-	public BoardGuiTool(Dimension board, Dimension screen, int reservedTop, int reservedBottom, int reservedLeft, int reservedRight) {
+	public BoardGuiTool(Dimension board, Dimension screen, boolean center) {
+		this(board, screen, 0, 0, 0, 0, center);
+	}
+
+	public BoardGuiTool(Dimension board, Dimension screen, int reservedTop, int reservedBottom, int reservedLeft, int reservedRight, boolean center) {
 		super();
 
 		this.screen = screen;
@@ -56,6 +82,11 @@ public class BoardGuiTool {
 
 		xOffset = reservedLeft + (int) ((screenWidth - (board.getW() * ratio)) / 2);
 		yOffset = reservedTop + (int) ((screenHeigth - (board.getH() * ratio)) / 2);
+
+		if (center) {
+			xOffset -= screenWidth / 2;
+			yOffset -= screenHeigth / 2;
+		}
 	}
 
 	public Point boardPointToScreen(Point p) {
@@ -105,7 +136,16 @@ public class BoardGuiTool {
 			Vector v12 = v2.copy().remove(v1).multiply(0.5f);
 			v1.add(v12);
 			g2.setColor(Color.BLACK);
-			g2.drawString(c.getNbResourceNeeded() + "(" + c.getNbPath() + ")", v1.getX(), v1.getY());
+			StringBuilder sb = new StringBuilder();
+			sb.append(c.getNbResourceNeeded());
+			sb.append("(");
+			sb.append(c.getNbPath());
+			for (ResourceType rt : c.getResourceTypes()) {
+				sb.append(", ");
+				sb.append(rt.getCode());
+			}
+			sb.append(")");
+			g2.drawString(sb.toString(), v1.getX(), v1.getY());
 		}
 
 		double radius = 2.5;

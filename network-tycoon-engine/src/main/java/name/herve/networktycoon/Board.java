@@ -18,11 +18,10 @@
  */
 package name.herve.networktycoon;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 
 import name.herve.bastod.tools.math.Dimension;
 
@@ -31,7 +30,7 @@ import name.herve.bastod.tools.math.Dimension;
  */
 public class Board {
 	private Dimension dimension;
-	private Set<ResourceType> resourceTypes;
+	private List<ResourceType> resourceTypes;
 	private Map<String, ResourceType> indexedResourceTypes;
 	private Network network;
 
@@ -40,7 +39,7 @@ public class Board {
 
 		this.dimension = dimension;
 		indexedResourceTypes = new HashMap<String, ResourceType>();
-		resourceTypes = new TreeSet<ResourceType>();
+		resourceTypes = new ArrayList<ResourceType>();
 		network = new Network();
 	}
 
@@ -60,7 +59,7 @@ public class Board {
 		return indexedResourceTypes.get(code);
 	}
 
-	public Collection<ResourceType> getResourceTypes() {
+	public List<ResourceType> getResourceTypes() {
 		return resourceTypes;
 	}
 

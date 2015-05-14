@@ -33,6 +33,7 @@ public class Node implements Comparable<Node>, Iterable<Connection> {
 	private String name;
 	private Point coord;
 	private Map<Connection, Node> connections;
+	private Object stuff;
 
 	public Node(int id, String name) {
 		super();
@@ -96,6 +97,10 @@ public class Node implements Comparable<Node>, Iterable<Connection> {
 		return connections.size();
 	}
 
+	public Object getStuff() {
+		return stuff;
+	}
+
 	public int getX() {
 		return coord.getX();
 	}
@@ -123,6 +128,10 @@ public class Node implements Comparable<Node>, Iterable<Connection> {
 
 	public void removeConnection(Connection c) {
 		connections.remove(c);
+	}
+
+	public void setStuff(Object stuff) {
+		this.stuff = stuff;
 	}
 
 	public void setX(int x) {

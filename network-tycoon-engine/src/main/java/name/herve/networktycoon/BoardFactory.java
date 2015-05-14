@@ -18,12 +18,11 @@
  */
 package name.herve.networktycoon;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -32,11 +31,19 @@ import name.herve.bastod.tools.GameException;
 import name.herve.bastod.tools.graph.Dijkstra;
 import name.herve.bastod.tools.graph.Graph;
 import name.herve.bastod.tools.math.Dimension;
-import name.herve.bastod.tools.math.Vector;
 import name.herve.networktycoon.delaunay.Pnt;
 import name.herve.networktycoon.delaunay.Triangle;
 import name.herve.networktycoon.delaunay.Triangulation;
-import name.herve.networktycoon.gui.BoardGuiTool;
+
+import org.jbox2d.collision.shapes.CircleShape;
+import org.jbox2d.collision.shapes.PolygonShape;
+import org.jbox2d.common.Vec2;
+import org.jbox2d.dynamics.Body;
+import org.jbox2d.dynamics.BodyDef;
+import org.jbox2d.dynamics.BodyType;
+import org.jbox2d.dynamics.FixtureDef;
+import org.jbox2d.dynamics.World;
+import org.jbox2d.dynamics.joints.DistanceJointDef;
 
 /**
  * @author Nicolas HERVE
@@ -48,10 +55,11 @@ public class BoardFactory {
 	private final static int NB_NODES = 15;
 	private final static int CLOSE_RANGE = 10;
 	private final static int MAX_RANGE = 40;
+	private final static int MAX_PATH_LENGTH = 6;
 
 	private final static String[] DEFAULT_RESOURCE_TYPES = new String[] { "*", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K" };
 
-	private long seed;
+	private Random rd;
 
 	public BoardFactory() {
 		super();
@@ -60,6 +68,18 @@ public class BoardFactory {
 
 	private Board createBoard() throws GameException {
 		return new Board(DEFAULT_BOARD_DIMENSION);
+	}
+
+	private void doGraphLayout(Board b) {
+		World world = new World(new Vec2(0, 0));
+		jbox2dInitWorld(world, b);
+
+		float dt = 1f / 60f;
+		int velocityIterations = 6;
+		int positionIterations = 2;
+		for (int i = 0; i < 180; i++) {
+			world.step(dt, velocityIterations, positionIterations);
+		}
 	}
 
 	private void doPathDuplicate(Board b) {
@@ -78,9 +98,9 @@ public class BoardFactory {
 			g.addEdge(map1.get(c.getNode1()), map1.get(c.getNode2()), c.getNbResourceNeeded());
 			count.put(c, 0);
 		}
-		
+
 		Dijkstra dijkstra = new Dijkstra(g);
-		for (int i = 0; i < network.getNbNodes() - 1; i++) {
+		for (int i = 0; i < (network.getNbNodes() - 1); i++) {
 			Node ni = network.getNodes().get(i);
 			for (int j = i + 1; j < network.getNbNodes(); j++) {
 				Node nj = network.getNodes().get(j);
@@ -95,98 +115,19 @@ public class BoardFactory {
 				}
 			}
 		}
-		
-		int limit = (int)(0.08 * network.getNbNodes() * (network.getNbNodes() - 1) / 2);
+
+		int limit = (int) ((0.08 * network.getNbNodes() * (network.getNbNodes() - 1)) / 2);
 		for (Connection c : network.getConnections()) {
-//			System.out.println(c + " - " + count.get(c) + " / " + limit);
+			// System.out.println(c + " - " + count.get(c) + " / " + limit);
 			if (count.get(c) >= limit) {
-				c.setNbPath(2);
+				c.setExpectedNbPath(2);
 			}
 		}
 	}
-	
-	private void doGraphLayout(Board b) {
-		Random rd = new Random(seed);
-		
-		BoardGuiTool debugTool = new BoardGuiTool(b.getDimension(), new Dimension(1024, 768));
-		Network network = b.getNetwork();
 
-		Map<Node, Vector> coord = new HashMap<Node, Vector>();
-		for (Node u : network) {
-			Vector cu = new Vector(u.getX(), u.getY());
-			System.out.println("n " + u.getId() + " : " + cu);
-			coord.put(u, cu);
-		}
-		Map<Connection, Float> springs = new HashMap<Connection, Float>();
-		for (Connection c : network.getConnections()) {
-			springs.put(c, (float) c.getNbResourceNeeded() * 15);
-			// springs.put(c, (float) c.distance());
-		}
+	private void doResources(Board board, int nbResourceTypes) {
+		Network network = board.getNetwork();
 
-		for (int i = 0; i < 100; i++) {
-			try {
-				debugTool.debug(b, new File("/tmp/nt/tbf_" + seed + "_" + i + ".jpg"));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-
-			Map<Node, Vector> forces = new HashMap<Node, Vector>();
-			for (Node u : network) {
-				Vector cu = coord.get(u);
-				Vector fu = new Vector(0, 0);
-				forces.put(u, fu);
-				for (Node v : network) {
-					if (u == v) {
-						continue;
-					}
-					Vector cv = coord.get(v);
-					Vector fuv = cv.copy().remove(cu);
-					// Vector fuv = cu.copy().remove(cv);
-					float duv = fuv.length();
-					if (duv == 0) {
-						fuv = new Vector(10 * rd.nextFloat(), 10 * rd.nextFloat());
-						duv = fuv.length();
-					}
-//					System.out.println(i + " : " + u.getId() + "<-" + v.getId() + "         ~ fuv 1 " + fuv + " (" + duv + ")");
-					fuv.normalize();
-					float force = 0;
-					if (u.isConnectedTo(v)) {
-						Connection c = u.getConnectionTo(v);
-						float spring = springs.get(c);
-						force = (float) (2 * Math.log10(spring)) * (duv - spring);
-//						System.out.println(i + " : " + u.getId() + "<-" + v.getId() + "         ~ force c  " + force + " / " + spring);
-					} else {
-						force = 100 / (duv * duv);
-//						System.out.println(i + " : " + u.getId() + "<-" + v.getId() + "         ~ force nc " + force);
-					}
-
-					fuv.multiply(force);
-//					System.out.println(i + " : " + u.getId() + "<-" + v.getId() + "         ~ fuv 2 " + fuv);
-					fu.add(fuv);
-//					System.out.println();
-				}
-			}
-			for (Node u : network) {
-				Vector cu = coord.get(u);
-				Vector fu = forces.get(u);
-//				System.out.println(i + "~ f " + fu);
-				cu.add(fu.multiply(0.1f));
-//				System.out.println(i + "~ n " + u.getId() + " : " + cu);
-
-				u.setX(cu.getXInt());
-				u.setY(cu.getYInt());
-			}
-		}
-
-		for (Node n : network) {
-			Vector cn = coord.get(n);
-//			System.out.println("n " + n.getId() + " : " + cn);
-			n.setX(cn.getXInt());
-			n.setY(cn.getYInt());
-		}
-	}
-
-	public void doResources(Board board, int nbResourceTypes) {
 		for (int r = 0; r < nbResourceTypes; r++) {
 			ResourceType resourceType = new ResourceType(DEFAULT_RESOURCE_TYPES[r]);
 			if (r == 0) {
@@ -194,16 +135,34 @@ public class BoardFactory {
 			}
 			board.registerResourceType(resourceType);
 		}
-	}
 
-	private void doShuffle(Board b) {
-		Random rd = new Random(seed);
-		Network network = b.getNetwork();
-		int x = b.getW() / 10;
-		int y = b.getH() / 10;
-		for (Node u : network) {
-			u.setX(u.getX() + rd.nextInt(2 * x) - x);
-			u.setY(u.getY() + rd.nextInt(2 * y) - y);
+		int overallBoardResources = 0;
+		for (Connection c : network.getConnections()) {
+			overallBoardResources += c.getExpectedNbPath() * c.getNbResourceNeeded();
+		}
+
+		List<Connection> sorted = new ArrayList<Connection>();
+		sorted.addAll(network.getConnections());
+		Collections.sort(sorted, new Comparator<Connection>() {
+
+			@Override
+			public int compare(Connection o1, Connection o2) {
+				return (o2.getNbResourceNeeded() - o1.getNbResourceNeeded()) + (10 * (o2.getExpectedNbPath() - o1.getExpectedNbPath()));
+			}
+		});
+
+		int avgResourceNb = (int) Math.ceil(overallBoardResources / (double) nbResourceTypes);
+		int[] left = new int[nbResourceTypes];
+		Arrays.fill(left, avgResourceNb);
+		for (Connection c : sorted) {
+			do {
+				int r = rd.nextInt(nbResourceTypes);
+				ResourceType rt = board.getResourceTypes().get(r);
+				if ((left[r] >= c.getNbResourceNeeded()) && !c.hasResourceType(rt)) {
+					c.addResourceType(rt);
+					left[r] -= c.getNbResourceNeeded();
+				}
+			} while (c.getExpectedNbPath() != c.getNbPath());
 		}
 	}
 
@@ -216,15 +175,10 @@ public class BoardFactory {
 	public Board getRandomBoard() throws GameException {
 		Board board = getEmptyBoard();
 
-		Random rd = new Random(seed);
-
 		int nbResourceTypes = NB_RESOURCES + rd.nextInt(NB_RESOURCES / 2);
 		int nbNode = NB_NODES + rd.nextInt(NB_NODES / 2);
 		int noCloseNeighbourRange = CLOSE_RANGE;
 		int maxNeighbourRange = MAX_RANGE;
-
-		// Resources
-		doResources(board, nbResourceTypes);
 
 		// Nodes
 		int top = -5 * board.getH();
@@ -346,31 +300,19 @@ public class BoardFactory {
 			}
 		}
 
-		double d = 0;
-		double r = 0;
 		for (Connection c : network.getConnections()) {
-			c.setNbResourceNeeded((int) Math.max(1, Math.floor((6 * c.distance()) / maxDist)));
-			d += c.distance();
-			r += c.getNbResourceNeeded();
+			c.setNbResourceNeeded((int) Math.max(1, Math.floor((MAX_PATH_LENGTH * c.distance()) / maxDist)));
 		}
 
-//		System.out.println("d = " + (d / network.getConnections().size()));
-//		System.out.println("r = " + (r / network.getConnections().size()));
-//		System.out.println("avg = " + (d / r));
-		
-//		doShuffle(board);
-//		doGraphLayout(board);
-		
-		// Duplicate important path
 		doPathDuplicate(board);
-		
+		doResources(board, nbResourceTypes);
+		doGraphLayout(board);
+
 		return board;
 	}
 
 	public Board getSampleBoard() throws GameException {
 		Board board = getEmptyBoard();
-
-		doResources(board, 6);
 
 		Network network = board.getNetwork();
 
@@ -408,16 +350,153 @@ public class BoardFactory {
 
 		network.addConnection(nodes[0], nodes[3]).setNbResourceNeeded(1);
 
-//		doShuffle(board);
-//		doGraphLayout(board);
-		
 		doPathDuplicate(board);
+		doResources(board, 6);
+		doGraphLayout(board);
 
 		return board;
 	}
 
+	private Body jbox2dCreateAnchor(World world, float x, float y) {
+		FixtureDef nfd = new FixtureDef();
+		CircleShape ncd = new CircleShape();
+		ncd.m_radius = 0.01f;
+		nfd.shape = ncd;
+
+		BodyDef a1 = new BodyDef();
+		a1.position.set(new Vec2(x, y));
+		a1.type = BodyType.STATIC;
+		Body a1b = world.createBody(a1);
+		a1b.createFixture(nfd);
+		return a1b;
+	}
+
+	public void jbox2dInitWorld(World world, Board b) {
+		world.setGravity(new Vec2(0, 0));
+
+		FixtureDef nfd = new FixtureDef();
+		CircleShape ncd = new CircleShape();
+		ncd.m_radius = 2.5f;
+		nfd.shape = ncd;
+		nfd.density = 10f;
+
+		float bxw = 4f;
+		float bxh = 1f;
+
+		FixtureDef box1 = new FixtureDef();
+		PolygonShape b1 = new PolygonShape();
+		b1.setAsBox(bxw, bxh);
+		box1.shape = b1;
+		box1.density = 10.0f;
+
+		float anchorLength = 5f;
+
+		for (Node n : b.getNetwork()) {
+			BodyDef nbd = new BodyDef();
+			nbd.position.set(new Vec2(n.getX(), n.getY()));
+			nbd.type = BodyType.DYNAMIC;
+			Body nbody = world.createBody(nbd);
+			nbody.createFixture(nfd);
+			n.setStuff(nbody);
+
+			jbox2dLink(world, jbox2dCreateAnchor(world, n.getX() - anchorLength, n.getY() - anchorLength), nbody);
+			jbox2dLink(world, jbox2dCreateAnchor(world, n.getX() - anchorLength, n.getY() + anchorLength), nbody);
+			jbox2dLink(world, jbox2dCreateAnchor(world, n.getX() + anchorLength, n.getY() - anchorLength), nbody);
+			jbox2dLink(world, jbox2dCreateAnchor(world, n.getX() + anchorLength, n.getY() + anchorLength), nbody);
+		}
+
+		float hbxw = bxw / 2;
+
+		Vec2 delta = new Vec2(0.01f, 0.01f);
+
+		for (Connection c : b.getNetwork().getConnections()) {
+			Node n1 = c.getNode1();
+			Node n2 = c.getNode2();
+
+			Vec2 start = new Vec2((n1.getX()), (n1.getY()));
+			Vec2 end = new Vec2((n2.getX()), (n2.getY()));
+			Vec2 step = end.sub(start);
+			float angle = (float) (Math.atan2(step.y, step.x));
+			step.mulLocal(1.0f / (c.getNbResourceNeeded() + 1));
+			float length = 1f * (step.length() - bxw);
+
+			Body[] other = new Body[c.getNbResourceNeeded()];
+			for (int r = 0; r < c.getNbPath(); r++) {
+				Vec2 pos = start.add(step);
+				Body previous = (Body) n1.getStuff();
+
+				for (int i = 0; i < c.getNbResourceNeeded(); i++) {
+					BodyDef nbd = new BodyDef();
+					nbd.position.set(pos.add(delta.mul(r)));
+					nbd.angle = angle;
+					nbd.type = BodyType.DYNAMIC;
+					Body nbody = world.createBody(nbd);
+					nbody.createFixture(box1);
+					pos.addLocal(step);
+
+					if (r == 0) {
+						other[i] = nbody;
+					} else {
+						float mid = (c.getNbResourceNeeded() - 1) / 2f;
+						float small = 1.0f + (0.2f * ((1 + mid) - Math.abs(i - mid)));
+
+						jbox2dLink(world, bxw * small, other[i], hbxw, 0f, nbody, hbxw, 0f);
+						jbox2dLink(world, bxw * small, other[i], -hbxw, 0f, nbody, -hbxw, 0f);
+					}
+
+					if (i == 0) {
+						jbox2dLink(world, length, previous, nbody, -hbxw, 0f);
+					} else {
+						jbox2dLink(world, length, previous, hbxw, 0f, nbody, -hbxw, 0f);
+					}
+					previous = nbody;
+				}
+
+				jbox2dLink(world, length, previous, hbxw, 0f, (Body) n2.getStuff());
+			}
+		}
+	}
+
+	private void jbox2dLink(World world, Body b1, Body b2) {
+		float length = b1.getPosition().sub(b2.getPosition()).length();
+
+		DistanceJointDef jd = new DistanceJointDef();
+		jd.collideConnected = false;
+
+		jd.bodyA = b1;
+		jd.bodyB = b2;
+
+		jd.length = length;
+		jd.frequencyHz = 5f;
+		jd.dampingRatio = 0.01f;
+		world.createJoint(jd);
+	}
+
+	private void jbox2dLink(World world, float length, Body b1, Body b2, float x2, float y2) {
+		jbox2dLink(world, length, b1, 0, 0, b2, x2, y2);
+	}
+
+	private void jbox2dLink(World world, float length, Body b1, float x1, float y1, Body b2) {
+		jbox2dLink(world, length, b1, x1, y1, b2, 0, 0);
+	}
+
+	private void jbox2dLink(World world, float length, Body b1, float x1, float y1, Body b2, float x2, float y2) {
+		DistanceJointDef jd = new DistanceJointDef();
+		jd.collideConnected = false;
+
+		jd.bodyA = b1;
+		jd.bodyB = b2;
+		jd.localAnchorA.set(x1, y1);
+		jd.localAnchorB.set(x2, y2);
+
+		jd.length = length;
+		jd.frequencyHz = 5f;
+		jd.dampingRatio = 10f;
+		world.createJoint(jd);
+	}
+
 	public void setSeed(long seed) {
-		this.seed = seed;
+		rd = new Random(seed);
 	}
 
 	private void tryToConnect(Network network, Node n1, Node n2, Node n3) {
