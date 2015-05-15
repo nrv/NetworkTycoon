@@ -18,6 +18,7 @@
  */
 package name.herve.networktycoon;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,8 +57,14 @@ public class BoardFactory {
 	private final static int CLOSE_RANGE = 10;
 	private final static int MAX_RANGE = 40;
 	private final static int MAX_PATH_LENGTH = 6;
+	
+	public final static float GFX_NODE_RADIUS = 2.5f;
+	public final static float GFX_CE_WIDTH = 8f;
+	public final static float GFX_CE_HEIGHT = 2f;
 
-	private final static String[] DEFAULT_RESOURCE_TYPES = new String[] { "*", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K" };
+	private final static String[] DEFAULT_NODE_NAMES = new String[] {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"};
+	private final static String[] DEFAULT_RESOURCE_TYPES = new String[] { "Joker", "Red", "Blue", "Green", "Yellow", "Pink", "Orange", "Cyan", "Magenta", "Black" };
+	private final static Color[] DEFAULT_RESOURCE_COLORS = new Color[] { Color.GRAY, Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.PINK, Color.ORANGE, Color.CYAN, Color.MAGENTA, Color.BLACK };
 
 	private Random rd;
 
@@ -77,7 +84,7 @@ public class BoardFactory {
 		float dt = 1f / 60f;
 		int velocityIterations = 6;
 		int positionIterations = 2;
-		for (int i = 0; i < 180; i++) {
+		for (int i = 0; i < 300; i++) {
 			world.step(dt, velocityIterations, positionIterations);
 		}
 		
@@ -120,7 +127,6 @@ public class BoardFactory {
 
 		int limit = (int) ((0.08 * network.getNbNodes() * (network.getNbNodes() - 1)) / 2);
 		for (Connection c : network.getConnections()) {
-			// System.out.println(c + " - " + count.get(c) + " / " + limit);
 			if (count.get(c) >= limit) {
 				c.setExpectedNbPath(2);
 			}
@@ -138,6 +144,7 @@ public class BoardFactory {
 
 		for (int r = 0; r < nbResourceTypes; r++) {
 			ResourceType resourceType = new ResourceType(DEFAULT_RESOURCE_TYPES[r]);
+			resourceType.setColor(DEFAULT_RESOURCE_COLORS[r]);
 			if (r == 0) {
 				resourceType.setJocker(true);
 			}
@@ -155,7 +162,7 @@ public class BoardFactory {
 
 			@Override
 			public int compare(Connection o1, Connection o2) {
-				return (o2.getNbResourceNeeded() - o1.getNbResourceNeeded()) + (10 * (o2.getExpectedNbPath() - o1.getExpectedNbPath()));
+				return (o2.getNbResourceNeeded() - o1.getNbResourceNeeded()) + (100 * (o2.getExpectedNbPath() - o1.getExpectedNbPath()));
 			}
 		});
 
@@ -203,7 +210,7 @@ public class BoardFactory {
 			Arrays.fill(occupied[x], false);
 		}
 		for (int n = 0; n < nbNode; n++) {
-			Node node = new Node(n, "n" + n);
+			Node node = new Node(n, DEFAULT_NODE_NAMES[n]);
 			int x, y;
 			boolean ok = true;
 
@@ -325,7 +332,7 @@ public class BoardFactory {
 
 		Node[] nodes = new Node[6];
 		for (int n = 0; n < nodes.length; n++) {
-			nodes[n] = new Node(n, "n" + n);
+			nodes[n] = new Node(n, DEFAULT_NODE_NAMES[n]);
 			network.addNode(nodes[n]);
 		}
 
@@ -402,12 +409,12 @@ public class BoardFactory {
 
 		FixtureDef nfd = new FixtureDef();
 		CircleShape ncd = new CircleShape();
-		ncd.m_radius = 2.5f;
+		ncd.m_radius = GFX_NODE_RADIUS;
 		nfd.shape = ncd;
 		nfd.density = 10f;
 
-		float bxw = 4f;
-		float bxh = 1f;
+		float bxw = GFX_CE_WIDTH / 2f;
+		float bxh = GFX_CE_HEIGHT / 2f;
 
 		FixtureDef box1 = new FixtureDef();
 		PolygonShape b1 = new PolygonShape();

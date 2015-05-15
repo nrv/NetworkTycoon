@@ -18,12 +18,15 @@
  */
 package name.herve.networktycoon;
 
+import java.awt.Color;
+
 /**
  * @author Nicolas HERVE
  */
 public class ResourceType implements Comparable<ResourceType> {
 	private String code;
 	private String name;
+	private Color color;
 	private boolean isJocker;
 
 	public ResourceType(String code) {
@@ -72,6 +75,10 @@ public class ResourceType implements Comparable<ResourceType> {
 		return code;
 	}
 
+	public Color getColor() {
+		return color;
+	}
+
 	public String getName() {
 		return name;
 	}
@@ -90,6 +97,10 @@ public class ResourceType implements Comparable<ResourceType> {
 
 	public void setCode(String code) {
 		this.code = code;
+	}
+
+	public void setColor(Color color) {
+		this.color = color;
 	}
 
 	public void setJocker(boolean isJocker) {
