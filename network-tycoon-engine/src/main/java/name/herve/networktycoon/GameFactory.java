@@ -19,36 +19,41 @@
 package name.herve.networktycoon;
 
 import java.awt.Color;
-import java.util.List;
-import java.util.Map;
+
 
 /**
  * @author Nicolas HERVE
  */
-public class Player {
-	private int index;
-	private String name;
-	private Color color;
-	private Map<ResourceType, List<Resource>> resources;
+public class GameFactory {
+	private final static Color[] DEFAULT_PLAYER_COLORS = new Color[] {Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.ORANGE};
 
-	public Player(int index) {
+	public GameFactory() {
 		super();
-		this.index = index;
 	}
-
-	public Color getColor() {
-		return color;
+	
+	public Game createGame(Board board, int nbPlayers) {
+		Game game = new Game(board);
+		
+		for (int i = 0; i < nbPlayers; i++) {
+			Player p = new Player(i);
+			p.setName("Player " + i);
+			p.setColor(DEFAULT_PLAYER_COLORS[i]);
+			game.addPlayer(p);
+		}
+		
+		createResources(game);
+		
+		return game;
 	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setColor(Color color) {
-		this.color = color;
-	}
-
-	public void setName(String name) {
-		this.name = name;
+	
+	private void createResources(Game game) {
+		for (ResourceType rt : game.getBoard().getResourceTypes()) {
+			int nb = (int)(1.5 * game.getBoard().getTotalNbResourceType(rt));
+			for (int n = 0; n < nb; n++) {
+				Resource r = new Resource(rt);
+				game.addToDiscarded(r);
+			}
+		}
+		game.shuffleDiscardedAndAddToDeck();
 	}
 }

@@ -30,17 +30,28 @@ import name.herve.bastod.tools.math.Dimension;
  */
 public class Board {
 	private Dimension dimension;
-	private List<ResourceType> resourceTypes;
-	private Map<String, ResourceType> indexedResourceTypes;
+	private Map<ResourceType, Integer> resourceTypes;
+	private List<ResourceType> indexedResourceTypes;
 	private Network network;
 
 	public Board(Dimension dimension) {
 		super();
 
 		this.dimension = dimension;
-		indexedResourceTypes = new HashMap<String, ResourceType>();
-		resourceTypes = new ArrayList<ResourceType>();
+		indexedResourceTypes = new ArrayList<ResourceType>();
 		network = new Network();
+	}
+
+	public void countResourceTypes() {
+		resourceTypes = new HashMap<ResourceType, Integer>();
+		for (ResourceType rt : indexedResourceTypes) {
+			resourceTypes.put(rt, 0);
+		}
+		for (Connection c : network.getConnections()) {
+			for (ResourceType rt : c.getResourceTypes()) {
+				resourceTypes.put(rt, resourceTypes.get(rt) + c.getNbResourceNeeded());
+			}
+		}
 	}
 
 	public Dimension getDimension() {
@@ -55,12 +66,16 @@ public class Board {
 		return network;
 	}
 
-	public ResourceType getResourceType(String code) {
-		return indexedResourceTypes.get(code);
+	public ResourceType getResourceType(int idx) {
+		return indexedResourceTypes.get(idx);
 	}
 
 	public List<ResourceType> getResourceTypes() {
-		return resourceTypes;
+		return indexedResourceTypes;
+	}
+
+	public int getTotalNbResourceType(ResourceType rt) {
+		return resourceTypes.get(rt);
 	}
 
 	public int getW() {
@@ -68,7 +83,6 @@ public class Board {
 	}
 
 	public void registerResourceType(ResourceType r) {
-		resourceTypes.add(r);
-		indexedResourceTypes.put(r.getCode(), r);
+		indexedResourceTypes.add(r);
 	}
 }

@@ -172,7 +172,7 @@ public class BoardFactory {
 		for (Connection c : sorted) {
 			do {
 				int r = rd.nextInt(nbResourceTypes);
-				ResourceType rt = board.getResourceTypes().get(r);
+				ResourceType rt = board.getResourceType(r);
 				if ((left[r] >= c.getNbResourceNeeded()) && !c.hasResourceType(rt)) {
 					c.addResourceType(rt);
 					left[r] -= c.getNbResourceNeeded();
@@ -180,6 +180,8 @@ public class BoardFactory {
 			} while (c.getExpectedNbPath() != c.getNbPath());
 			c.initConnectionElements();
 		}
+		
+		board.countResourceTypes();
 	}
 
 	public Board getEmptyBoard() throws GameException {

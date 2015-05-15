@@ -18,37 +18,26 @@
  */
 package name.herve.networktycoon;
 
-import java.awt.Color;
-import java.util.List;
-import java.util.Map;
+import name.herve.bastod.tools.GameException;
+
 
 /**
  * @author Nicolas HERVE
  */
-public class Player {
-	private int index;
-	private String name;
-	private Color color;
-	private Map<ResourceType, List<Resource>> resources;
+public class TestGameFactory {
+	
 
-	public Player(int index) {
-		super();
-		this.index = index;
-	}
-
-	public Color getColor() {
-		return color;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setColor(Color color) {
-		this.color = color;
-	}
-
-	public void setName(String name) {
-		this.name = name;
+	public static void main(String[] args) {
+		try {
+			BoardFactory bf = new BoardFactory();
+			bf.setSeed(7000);
+			Board b = bf.getRandomBoard();
+			
+			GameFactory gf = new GameFactory();
+			gf.createGame(b, 4);
+			
+		} catch (GameException e) {
+			e.printStackTrace();
+		}
 	}
 }
