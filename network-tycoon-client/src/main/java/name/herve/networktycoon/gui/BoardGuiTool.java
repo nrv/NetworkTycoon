@@ -23,11 +23,12 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Shape;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
 
 import javax.imageio.ImageIO;
 
@@ -36,6 +37,7 @@ import name.herve.bastod.tools.math.Point;
 import name.herve.bastod.tools.math.Vector;
 import name.herve.networktycoon.Board;
 import name.herve.networktycoon.Connection;
+import name.herve.networktycoon.ConnectionElement;
 import name.herve.networktycoon.Node;
 import name.herve.networktycoon.ResourceType;
 
@@ -89,10 +91,6 @@ public class BoardGuiTool {
 		}
 	}
 
-	public Point boardPointToScreen(Point p) {
-		return new Point((int) boardXCoordToScreen(p.getX()), (int) boardYCoordToScreen(p.getY()));
-	}
-
 	public double boardXCoordToScreen(double coord) {
 		return xCoordToScreen(coord + 0.5);
 	}
@@ -124,15 +122,17 @@ public class BoardGuiTool {
 		// g2.drawLine(p1.getX(), p1.getY(), p2.getX(), p2.getY());
 		// }
 
+		Shape rectangle = new Rectangle2D.Double(0, 0, dimToScreen(4), dimToScreen(1));
 		for (Connection c : b.getNetwork().getConnections()) {
 			g2.setColor(Color.BLUE);
-			Iterator<Node> itn = c.iterator();
-			Point p1 = boardPointToScreen(itn.next().getCoord());
-			Point p2 = boardPointToScreen(itn.next().getCoord());
-			g2.drawLine(p1.getX(), p1.getY(), p2.getX(), p2.getY());
+			int x1 = (int) boardXCoordToScreen(c.getNode1().getX());
+			int y1 = (int) boardYCoordToScreen(c.getNode1().getY());
+			int x2 = (int) boardXCoordToScreen(c.getNode2().getX());
+			int y2 = (int) boardYCoordToScreen(c.getNode2().getY());
+			g2.drawLine(x1, y1, x2, y2);
 
-			Vector v1 = new Vector(p1.getX(), p1.getY());
-			Vector v2 = new Vector(p2.getX(), p2.getY());
+			Vector v1 = new Vector(x1, y1);
+			Vector v2 = new Vector(x2, y2);
 			Vector v12 = v2.copy().remove(v1).multiply(0.5f);
 			v1.add(v12);
 			g2.setColor(Color.BLACK);
@@ -146,17 +146,36 @@ public class BoardGuiTool {
 			}
 			sb.append(")");
 			g2.drawString(sb.toString(), v1.getX(), v1.getY());
+			
+			AffineTransform saveXform = g2.getTransform();
+			for (ResourceType rt : c.getResourceTypes()) {
+				for (ConnectionElement ce : c.getConnectionElements(rt)) {
+					AffineTransform at = new AffineTransform();
+					at.translate(boardXCoordToScreen(ce.getX() - 2), boardYCoordToScreen(ce.getY() - 0.5));
+					g2.setTransform(at);
+					g2.fill(rectangle);
+				}
+			}
+			g2.setTransform(saveXform);
 		}
 
 		double radius = 2.5;
+		Shape circle = new Ellipse2D.Double(0, 0, dimToScreen(2.0 * radius), dimToScreen(2.0 * radius));
+		AffineTransform saveXform = g2.getTransform();
 		for (Node n : b.getNetwork()) {
 			g2.setColor(Color.RED);
-			Shape circle = new Ellipse2D.Double(boardXCoordToScreen(n.getX() - radius), boardYCoordToScreen(n.getY() - radius), dimToScreen(2.0 * radius), dimToScreen(2.0 * radius));
+			AffineTransform at = new AffineTransform();
+			at.translate(boardXCoordToScreen(n.getX() - radius), boardYCoordToScreen(n.getY() - radius));
+			g2.setTransform(at);
 			g2.fill(circle);
+			
 			g2.setColor(Color.BLACK);
-			Point p1 = boardPointToScreen(n.getCoord());
-			g2.drawString(n.getName(), p1.getX(), p1.getY());
+			at = new AffineTransform();
+			at.translate(boardXCoordToScreen(n.getX()), boardYCoordToScreen(n.getY()));
+			g2.setTransform(at);
+			g2.drawString(n.getName(), 0, 0);
 		}
+		g2.setTransform(saveXform);
 
 		return img;
 	}

@@ -25,6 +25,7 @@ public class ConnectionElement {
 	private float x;
 	private float y;
 	private float o;
+	private Object stuff;
 
 	public ConnectionElement() {
 		super();
@@ -41,6 +42,10 @@ public class ConnectionElement {
 		return o;
 	}
 
+	public Object getStuff() {
+		return stuff;
+	}
+
 	public float getX() {
 		return x;
 	}
@@ -51,6 +56,10 @@ public class ConnectionElement {
 
 	public void setO(float o) {
 		this.o = o;
+	}
+
+	public void setStuff(Object stuff) {
+		this.stuff = stuff;
 	}
 
 	public void setX(float x) {

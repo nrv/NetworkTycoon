@@ -80,6 +80,8 @@ public class BoardFactory {
 		for (int i = 0; i < 180; i++) {
 			world.step(dt, velocityIterations, positionIterations);
 		}
+		
+		jbox2dGetLayoutData(b);
 	}
 
 	private void doPathDuplicate(Board b) {
@@ -125,6 +127,12 @@ public class BoardFactory {
 		}
 	}
 
+	private void doPostInit(Board board, int nbResourceTypes) {
+		doPathDuplicate(board);
+		doResources(board, nbResourceTypes);
+		doGraphLayout(board);
+	}
+
 	private void doResources(Board board, int nbResourceTypes) {
 		Network network = board.getNetwork();
 
@@ -163,6 +171,7 @@ public class BoardFactory {
 					left[r] -= c.getNbResourceNeeded();
 				}
 			} while (c.getExpectedNbPath() != c.getNbPath());
+			c.initConnectionElements();
 		}
 	}
 
@@ -304,9 +313,7 @@ public class BoardFactory {
 			c.setNbResourceNeeded((int) Math.max(1, Math.floor((MAX_PATH_LENGTH * c.distance()) / maxDist)));
 		}
 
-		doPathDuplicate(board);
-		doResources(board, nbResourceTypes);
-		doGraphLayout(board);
+		doPostInit(board, nbResourceTypes);
 
 		return board;
 	}
@@ -350,9 +357,7 @@ public class BoardFactory {
 
 		network.addConnection(nodes[0], nodes[3]).setNbResourceNeeded(1);
 
-		doPathDuplicate(board);
-		doResources(board, 6);
-		doGraphLayout(board);
+		doPostInit(board, 6);
 
 		return board;
 	}
@@ -369,6 +374,27 @@ public class BoardFactory {
 		Body a1b = world.createBody(a1);
 		a1b.createFixture(nfd);
 		return a1b;
+	}
+
+	public void jbox2dGetLayoutData(Board b) {
+		for (Node n : b.getNetwork()) {
+			Body nbody = (Body) n.getStuff();
+			Vec2 pos = nbody.getPosition();
+			n.setX(Math.round(pos.x));
+			n.setY(Math.round(pos.y));
+		}
+
+		for (Connection c : b.getNetwork().getConnections()) {
+			for (ResourceType rt : c.getResourceTypes()) {
+				for (ConnectionElement ce : c.getConnectionElements(rt)) {
+					Body cbody = (Body) ce.getStuff();
+					Vec2 pos = cbody.getPosition();
+					ce.setX(pos.x);
+					ce.setY(pos.y);
+					ce.setO(cbody.getAngle());
+				}
+			}
+		}
 	}
 
 	public void jbox2dInitWorld(World world, Board b) {
@@ -421,23 +447,28 @@ public class BoardFactory {
 			float length = 1f * (step.length() - bxw);
 
 			Body[] other = new Body[c.getNbResourceNeeded()];
-			for (int r = 0; r < c.getNbPath(); r++) {
+			boolean firstPath = true;
+			for (ResourceType rt : c.getResourceTypes()) {
 				Vec2 pos = start.add(step);
 				Body previous = (Body) n1.getStuff();
 
-				for (int i = 0; i < c.getNbResourceNeeded(); i++) {
+				List<ConnectionElement> ce = c.getConnectionElements(rt);
+
+				for (int i = 0; i < ce.size(); i++) {
 					BodyDef nbd = new BodyDef();
-					nbd.position.set(pos.add(delta.mul(r)));
+					nbd.position.set(firstPath ? pos : pos.add(delta));
 					nbd.angle = angle;
 					nbd.type = BodyType.DYNAMIC;
 					Body nbody = world.createBody(nbd);
 					nbody.createFixture(box1);
+					ce.get(i).setStuff(nbody);
+
 					pos.addLocal(step);
 
-					if (r == 0) {
+					if (firstPath) {
 						other[i] = nbody;
 					} else {
-						float mid = (c.getNbResourceNeeded() - 1) / 2f;
+						float mid = (ce.size() - 1) / 2f;
 						float small = 1.0f + (0.2f * ((1 + mid) - Math.abs(i - mid)));
 
 						jbox2dLink(world, bxw * small, other[i], hbxw, 0f, nbody, hbxw, 0f);
@@ -453,6 +484,8 @@ public class BoardFactory {
 				}
 
 				jbox2dLink(world, length, previous, hbxw, 0f, (Body) n2.getStuff());
+
+				firstPath = false;
 			}
 		}
 	}

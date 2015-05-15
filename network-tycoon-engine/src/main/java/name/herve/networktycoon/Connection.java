@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -61,6 +62,10 @@ public class Connection implements Iterable<Node> {
 		return Math.sqrt(Math.pow(nodes.get(0).getX() - nodes.get(1).getX(), 2) + Math.pow(nodes.get(0).getY() - nodes.get(1).getY(), 2));
 	}
 
+	public List<ConnectionElement> getConnectionElements(ResourceType rt) {
+		return path.get(rt);
+	}
+
 	public int getExpectedNbPath() {
 		return expectedNbPath;
 	}
@@ -85,13 +90,22 @@ public class Connection implements Iterable<Node> {
 		return path.keySet();
 	}
 
+	// public void setNbPath(int nbPath) {
+	// this.nbPath = nbPath;
+	// }
+
 	public boolean hasResourceType(ResourceType resourceType) {
 		return path.containsKey(resourceType);
 	}
 
-	// public void setNbPath(int nbPath) {
-	// this.nbPath = nbPath;
-	// }
+	public void initConnectionElements() {
+		for (Entry<ResourceType, List<ConnectionElement>> e : path.entrySet()) {
+			e.getValue().clear();
+			for (int i = 0; i < nbResourceNeeded; i++) {
+				e.getValue().add(new ConnectionElement());
+			}
+		}
+	}
 
 	@Override
 	public Iterator<Node> iterator() {

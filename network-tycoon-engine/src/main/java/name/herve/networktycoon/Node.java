@@ -23,15 +23,14 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import name.herve.bastod.tools.math.Point;
-
 /**
  * @author Nicolas HERVE
  */
 public class Node implements Comparable<Node>, Iterable<Connection> {
 	private int id;
 	private String name;
-	private Point coord;
+	private float x;
+	private float y;
 	private Map<Connection, Node> connections;
 	private Object stuff;
 
@@ -41,7 +40,6 @@ public class Node implements Comparable<Node>, Iterable<Connection> {
 		this.name = name;
 		this.id = id;
 		connections = new HashMap<Connection, Node>();
-		coord = new Point();
 	}
 
 	public void addConnection(Connection c, Node n) {
@@ -81,10 +79,6 @@ public class Node implements Comparable<Node>, Iterable<Connection> {
 		return null;
 	}
 
-	public Point getCoord() {
-		return coord;
-	}
-
 	public int getId() {
 		return id;
 	}
@@ -101,12 +95,12 @@ public class Node implements Comparable<Node>, Iterable<Connection> {
 		return stuff;
 	}
 
-	public int getX() {
-		return coord.getX();
+	public float getX() {
+		return x;
 	}
 
-	public int getY() {
-		return coord.getY();
+	public float getY() {
+		return y;
 	}
 
 	@Override
@@ -134,12 +128,12 @@ public class Node implements Comparable<Node>, Iterable<Connection> {
 		this.stuff = stuff;
 	}
 
-	public void setX(int x) {
-		coord.setX(x);
+	public void setX(float x) {
+		this.x = x;
 	}
 
-	public void setY(int y) {
-		coord.setY(y);
+	public void setY(float y) {
+		this.y = y;
 	}
 
 	@Override

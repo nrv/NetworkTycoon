@@ -34,7 +34,7 @@ public class TestBoardFactory {
 		// Dimension(1024, 768), new Dimension(1280, 1024), new Dimension(1920,
 		// 1080) };
 		Dimension[] screens = new Dimension[] { new Dimension(1024, 768) };
-		int nb = 10;
+		int nb = 1;
 		File tempDir = new File("/tmp/nt");
 		tempDir.mkdirs();
 
