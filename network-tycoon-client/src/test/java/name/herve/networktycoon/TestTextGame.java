@@ -18,34 +18,30 @@
  */
 package name.herve.networktycoon;
 
-import java.awt.Color;
+import name.herve.bastod.tools.GameException;
+import name.herve.networktycoon.engine.Engine;
+import name.herve.networktycoon.text.TextBoardInterface;
+
 
 /**
  * @author Nicolas HERVE
  */
-public class Player {
-	private String name;
-	private Color color;
-	private ResourceListByType resources;
+public class TestTextGame {
+	
 
-	public Player() {
-		super();
-		this.resources = new ResourceListByType();
-	}
-
-	public Color getColor() {
-		return color;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setColor(Color color) {
-		this.color = color;
-	}
-
-	public void setName(String name) {
-		this.name = name;
+	public static void main(String[] args) {
+		try {
+			BoardFactory bf = new BoardFactory();
+			bf.setSeed(7000);
+			GameFactory gf = new GameFactory();
+			Game g = gf.createGame(bf.getRandomBoard(), 2);
+			TextBoardInterface bi = new TextBoardInterface();
+			
+			Engine engine = new Engine();
+			engine.start(g, bi);
+			
+		} catch (GameException e) {
+			e.printStackTrace();
+		}
 	}
 }

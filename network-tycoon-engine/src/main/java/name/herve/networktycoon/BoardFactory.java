@@ -31,6 +31,7 @@ import java.util.Random;
 import name.herve.bastod.tools.GameException;
 import name.herve.bastod.tools.graph.Dijkstra;
 import name.herve.bastod.tools.graph.Graph;
+import name.herve.bastod.tools.graph.Node;
 import name.herve.bastod.tools.math.Dimension;
 import name.herve.networktycoon.delaunay.Pnt;
 import name.herve.networktycoon.delaunay.Triangle;
@@ -57,12 +58,12 @@ public class BoardFactory {
 	private final static int CLOSE_RANGE = 10;
 	private final static int MAX_RANGE = 40;
 	private final static int MAX_PATH_LENGTH = 6;
-	
+
 	public final static float GFX_NODE_RADIUS = 2.5f;
 	public final static float GFX_CE_WIDTH = 8f;
 	public final static float GFX_CE_HEIGHT = 2f;
 
-	private final static String[] DEFAULT_NODE_NAMES = new String[] {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"};
+	private final static String[] DEFAULT_NODE_NAMES = new String[] { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z" };
 	private final static String[] DEFAULT_RESOURCE_TYPES = new String[] { "Joker", "Red", "Blue", "Green", "Yellow", "Pink", "Orange", "Cyan", "Magenta", "Black" };
 	private final static Color[] DEFAULT_RESOURCE_COLORS = new Color[] { Color.GRAY, Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.PINK, Color.ORANGE, Color.CYAN, Color.MAGENTA, Color.BLACK };
 
@@ -87,37 +88,25 @@ public class BoardFactory {
 		for (int i = 0; i < 300; i++) {
 			world.step(dt, velocityIterations, positionIterations);
 		}
-		
+
 		jbox2dGetLayoutData(b);
 	}
-
+	
 	private void doPathDuplicate(Board b) {
 		Network network = b.getNetwork();
-		Graph g = new Graph();
-		Map<Node, name.herve.bastod.tools.graph.Node> map1 = new HashMap<Node, name.herve.bastod.tools.graph.Node>();
-		Map<name.herve.bastod.tools.graph.Node, Node> map2 = new HashMap<name.herve.bastod.tools.graph.Node, Node>();
 		Map<Connection, Integer> count = new HashMap<Connection, Integer>();
-		for (Node n : network) {
-			name.herve.bastod.tools.graph.Node nn = new name.herve.bastod.tools.graph.Node();
-			map1.put(n, nn);
-			map2.put(nn, n);
-			g.addNode(nn);
-		}
 		for (Connection c : network.getConnections()) {
-			g.addEdge(map1.get(c.getNode1()), map1.get(c.getNode2()), c.getNbResourceNeeded());
 			count.put(c, 0);
 		}
 
-		Dijkstra dijkstra = new Dijkstra(g);
-		for (int i = 0; i < (network.getNbNodes() - 1); i++) {
-			Node ni = network.getNodes().get(i);
-			for (int j = i + 1; j < network.getNbNodes(); j++) {
-				Node nj = network.getNodes().get(j);
-				List<name.herve.bastod.tools.graph.Node> path = dijkstra.getPathNodes(map1.get(ni), map1.get(nj));
+		for (int i = 0; i < (network.getNbEndPoints() - 1); i++) {
+			EndPoint ni = network.getEndPoints().get(i);
+			for (int j = i + 1; j < network.getNbEndPoints(); j++) {
+				EndPoint nj = network.getEndPoints().get(j);
+				List<EndPoint> path = network.getShortestPath(ni, nj);
 
-				Node p = ni;
-				for (name.herve.bastod.tools.graph.Node cp : path) {
-					Node n = map2.get(cp);
+				EndPoint p = ni;
+				for (EndPoint n : path) {
 					Connection c = p.getConnectionTo(n);
 					count.put(c, count.get(c) + 1);
 					p = n;
@@ -125,7 +114,7 @@ public class BoardFactory {
 			}
 		}
 
-		int limit = (int) ((0.08 * network.getNbNodes() * (network.getNbNodes() - 1)) / 2);
+		int limit = (int) ((0.08 * network.getNbEndPoints() * (network.getNbEndPoints() - 1)) / 2);
 		for (Connection c : network.getConnections()) {
 			if (count.get(c) >= limit) {
 				c.setExpectedNbPath(2);
@@ -134,6 +123,7 @@ public class BoardFactory {
 	}
 
 	private void doPostInit(Board board, int nbResourceTypes) {
+		board.getNetwork().buildInternalGraph();
 		doPathDuplicate(board);
 		doResources(board, nbResourceTypes);
 		doGraphLayout(board);
@@ -180,7 +170,7 @@ public class BoardFactory {
 			} while (c.getExpectedNbPath() != c.getNbPath());
 			c.initConnectionElements();
 		}
-		
+
 		board.countResourceTypes();
 	}
 
@@ -212,7 +202,7 @@ public class BoardFactory {
 			Arrays.fill(occupied[x], false);
 		}
 		for (int n = 0; n < nbNode; n++) {
-			Node node = new Node(n, DEFAULT_NODE_NAMES[n]);
+			EndPoint node = new EndPoint(n, DEFAULT_NODE_NAMES[n]);
 			int x, y;
 			boolean ok = true;
 
@@ -264,7 +254,7 @@ public class BoardFactory {
 			occupied[x][y] = true;
 			node.setX(x);
 			node.setY(y);
-			network.addNode(node);
+			network.addEndPoint(node);
 			triangulation.delaunayPlace(new Pnt(node));
 		}
 
@@ -272,9 +262,9 @@ public class BoardFactory {
 		for (Triangle triangle : triangulation) {
 			Pnt[] vertices = triangle.toArray(new Pnt[0]);
 
-			Node n1 = vertices[0].getNode();
-			Node n2 = vertices[1].getNode();
-			Node n3 = vertices[2].getNode();
+			EndPoint n1 = vertices[0].getNode();
+			EndPoint n2 = vertices[1].getNode();
+			EndPoint n3 = vertices[2].getNode();
 
 			if ((n1 != null) && (n2 != null) && (n3 != null)) {
 				tryToConnect(network, n1, n2, n3);
@@ -283,43 +273,37 @@ public class BoardFactory {
 			}
 		}
 
-		List<Node> nodeToRemove = new ArrayList<Node>();
+		List<EndPoint> nodeToRemove = new ArrayList<EndPoint>();
 		do {
 			nodeToRemove.clear();
-			for (Node n : network) {
+			for (EndPoint n : network) {
 				if (n.getNbConnections() < 2) {
 					nodeToRemove.add(n);
 				}
 			}
-			for (Node n : nodeToRemove) {
+			for (EndPoint n : nodeToRemove) {
 				network.removeNode(n);
 			}
 		} while (!nodeToRemove.isEmpty());
 
 		do {
 			Connection c = network.getConnections().get(rd.nextInt(network.getNbConnections()));
-			boolean remove = true;
-			for (Node n : c) {
-				if (n.getNbConnections() < 3) {
-					remove = false;
-				}
-			}
-			if (remove) {
+			if ((c.getEndPoint1().getNbConnections() > 2) && (c.getEndPoint2().getNbConnections() > 2)) {
 				network.removeConnection(c);
 			}
-		} while (network.getNbConnections() > (1.8 * network.getNbNodes()));
+		} while (network.getNbConnections() > (1.8 * network.getNbEndPoints()));
 
 		// Resources
 		double maxDist = 0;
 		for (Connection c : network.getConnections()) {
-			double d = c.distance();
+			double d = c.getBoardDistance();
 			if (d > maxDist) {
 				maxDist = d;
 			}
 		}
 
 		for (Connection c : network.getConnections()) {
-			c.setNbResourceNeeded((int) Math.max(1, Math.floor((MAX_PATH_LENGTH * c.distance()) / maxDist)));
+			c.setNbResourceNeeded((int) Math.max(1, Math.floor((MAX_PATH_LENGTH * c.getBoardDistance()) / maxDist)));
 		}
 
 		doPostInit(board, nbResourceTypes);
@@ -332,10 +316,10 @@ public class BoardFactory {
 
 		Network network = board.getNetwork();
 
-		Node[] nodes = new Node[6];
+		EndPoint[] nodes = new EndPoint[6];
 		for (int n = 0; n < nodes.length; n++) {
-			nodes[n] = new Node(n, DEFAULT_NODE_NAMES[n]);
-			network.addNode(nodes[n]);
+			nodes[n] = new EndPoint(n, DEFAULT_NODE_NAMES[n]);
+			network.addEndPoint(nodes[n]);
 		}
 
 		nodes[0].setX(board.getW() / 2);
@@ -386,7 +370,7 @@ public class BoardFactory {
 	}
 
 	public void jbox2dGetLayoutData(Board b) {
-		for (Node n : b.getNetwork()) {
+		for (EndPoint n : b.getNetwork()) {
 			Body nbody = (Body) n.getStuff();
 			Vec2 pos = nbody.getPosition();
 			n.setX(Math.round(pos.x));
@@ -426,7 +410,7 @@ public class BoardFactory {
 
 		float anchorLength = 5f;
 
-		for (Node n : b.getNetwork()) {
+		for (EndPoint n : b.getNetwork()) {
 			BodyDef nbd = new BodyDef();
 			nbd.position.set(new Vec2(n.getX(), n.getY()));
 			nbd.type = BodyType.DYNAMIC;
@@ -445,8 +429,8 @@ public class BoardFactory {
 		Vec2 delta = new Vec2(0.01f, 0.01f);
 
 		for (Connection c : b.getNetwork().getConnections()) {
-			Node n1 = c.getNode1();
-			Node n2 = c.getNode2();
+			EndPoint n1 = c.getEndPoint1();
+			EndPoint n2 = c.getEndPoint2();
 
 			Vec2 start = new Vec2((n1.getX()), (n1.getY()));
 			Vec2 end = new Vec2((n2.getX()), (n2.getY()));
@@ -541,7 +525,7 @@ public class BoardFactory {
 		rd = new Random(seed);
 	}
 
-	private void tryToConnect(Network network, Node n1, Node n2, Node n3) {
+	private void tryToConnect(Network network, EndPoint n1, EndPoint n2, EndPoint n3) {
 		Pnt v12 = new Pnt(n1.getX() - n2.getX(), n1.getY() - n2.getY());
 		Pnt v13 = new Pnt(n1.getX() - n3.getX(), n1.getY() - n3.getY());
 

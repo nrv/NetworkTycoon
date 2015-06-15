@@ -18,34 +18,47 @@
  */
 package name.herve.networktycoon;
 
-import java.awt.Color;
+import name.herve.bastod.tools.GameException;
 
 /**
  * @author Nicolas HERVE
  */
-public class Player {
-	private String name;
-	private Color color;
-	private ResourceListByType resources;
+public abstract class ResourceList {
+	private int size;
 
-	public Player() {
+	public ResourceList() {
 		super();
-		this.resources = new ResourceListByType();
+		size = 0;
 	}
 
-	public Color getColor() {
-		return color;
+	protected abstract void add(Resource r) throws GameException;
+
+	public void addResource(Resource r) throws GameException {
+		add(r);
+		size++;
 	}
 
-	public String getName() {
-		return name;
+	public abstract Resource getResource(ResourceType t) throws GameException;
+
+	public abstract boolean hasResource(ResourceType t);
+
+	public boolean isEmpty() {
+		return size() == 0;
 	}
 
-	public void setColor(Color color) {
-		this.color = color;
+	protected abstract Resource remove(Resource r) throws GameException;
+
+	public Resource removeResource(Resource r) throws GameException {
+		Resource rm = remove(r);
+		size--;
+		return rm;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public Resource removeResource(ResourceType t) throws GameException {
+		return removeResource(getResource(t));
+	}
+
+	public int size() {
+		return size;
 	}
 }

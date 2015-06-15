@@ -58,8 +58,30 @@ public class Board {
 		return dimension;
 	}
 
+	public List<EndPoint> getEndPoints() {
+		return network.getEndPoints();
+	}
+
 	public int getH() {
 		return dimension.getH();
+	}
+
+	public int getNbResourceNeeded(EndPoint start, EndPoint end) {
+		int nb = 0;
+		List<EndPoint> path = network.getShortestPath(start, end);
+		EndPoint current = start;
+
+		for (EndPoint next : path) {
+			Connection c = current.getConnectionTo(next);
+			nb += c.getNbResourceNeeded();
+			current = next;
+		}
+
+		return nb;
+	}
+
+	public int getNbResourceNeeded(Goal g) {
+		return getNbResourceNeeded(g.getEndPoint1(), g.getEndPoint2());
 	}
 
 	public Network getNetwork() {

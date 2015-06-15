@@ -20,7 +20,6 @@ package name.herve.networktycoon;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -29,37 +28,20 @@ import java.util.Set;
 /**
  * @author Nicolas HERVE
  */
-public class Connection implements Iterable<Node> {
-	private List<Node> nodes;
+public class Connection extends TwoEndPoints {
 	private Map<ResourceType, List<ConnectionElement>> path;
 	private int nbResourceNeeded;
 	private int expectedNbPath;
 
 	public Connection() {
 		super();
-		nodes = new ArrayList<Node>();
 		path = new HashMap<ResourceType, List<ConnectionElement>>();
-	}
-
-	public Connection(Node n1, Node n2) {
-		this();
-		add(n1);
-		add(n2);
 		setExpectedNbPath(1);
-	}
-
-	public Connection add(Node e) {
-		nodes.add(e);
-		return this;
 	}
 
 	public Connection addResourceType(ResourceType resourceType) {
 		path.put(resourceType, new ArrayList<ConnectionElement>());
 		return this;
-	}
-
-	public double distance() {
-		return Math.sqrt(Math.pow(nodes.get(0).getX() - nodes.get(1).getX(), 2) + Math.pow(nodes.get(0).getY() - nodes.get(1).getY(), 2));
 	}
 
 	public List<ConnectionElement> getConnectionElements(ResourceType rt) {
@@ -78,21 +60,9 @@ public class Connection implements Iterable<Node> {
 		return nbResourceNeeded;
 	}
 
-	public Node getNode1() {
-		return nodes.get(0);
-	}
-
-	public Node getNode2() {
-		return nodes.get(1);
-	}
-
 	public Set<ResourceType> getResourceTypes() {
 		return path.keySet();
 	}
-
-	// public void setNbPath(int nbPath) {
-	// this.nbPath = nbPath;
-	// }
 
 	public boolean hasResourceType(ResourceType resourceType) {
 		return path.containsKey(resourceType);
@@ -107,11 +77,6 @@ public class Connection implements Iterable<Node> {
 		}
 	}
 
-	@Override
-	public Iterator<Node> iterator() {
-		return nodes.iterator();
-	}
-
 	public void setExpectedNbPath(int expectedNbPath) {
 		this.expectedNbPath = expectedNbPath;
 	}
@@ -122,6 +87,6 @@ public class Connection implements Iterable<Node> {
 
 	@Override
 	public String toString() {
-		return "Connection [" + getNode1().getId() + "->" + getNode2().getId() + ", nbResourceNeeded=" + getNbResourceNeeded() + ", nbPath=" + getNbPath() + "]";
+		return "Connection [" + getEndPoint1().getId() + "->" + getEndPoint2().getId() + ", nbResourceNeeded=" + getNbResourceNeeded() + ", nbPath=" + getNbPath() + "]";
 	}
 }

@@ -16,36 +16,33 @@
  * You should have received a copy of the GNU General Public License
  * along with Network Tycoon. If not, see <http://www.gnu.org/licenses/>.
  */
-package name.herve.networktycoon;
+package name.herve.networktycoon.engine;
 
-import java.awt.Color;
+import name.herve.networktycoon.Board;
+import name.herve.networktycoon.Player;
+import name.herve.networktycoon.ResourceListFixedSize;
 
 /**
  * @author Nicolas HERVE
  */
-public class Player {
-	private String name;
-	private Color color;
-	private ResourceListByType resources;
+public abstract class BoardInterface {
+	private Board board;
 
-	public Player() {
+	public BoardInterface() {
 		super();
-		this.resources = new ResourceListByType();
 	}
 
-	public Color getColor() {
-		return color;
+	public Board getBoard() {
+		return board;
 	}
 
-	public String getName() {
-		return name;
-	}
+	public abstract PlayerInterface getPlayerInterface(Player player);
 
-	public void setColor(Color color) {
-		this.color = color;
+	public void setBoard(Board board) {
+		this.board = board;
 	}
+	
+	public abstract void updateShownResources(ResourceListFixedSize shownResources);
+	public abstract void warningTooManyJockersInShownResources();
 
-	public void setName(String name) {
-		this.name = name;
-	}
 }

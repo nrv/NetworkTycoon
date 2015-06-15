@@ -18,34 +18,39 @@
  */
 package name.herve.networktycoon;
 
-import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * @author Nicolas HERVE
  */
-public class Player {
-	private String name;
-	private Color color;
-	private ResourceListByType resources;
+public class CardDeck<T extends Card> {
+	private Deque<T> deck;
+	private List<T> discarded;
 
-	public Player() {
+	public CardDeck() {
 		super();
-		this.resources = new ResourceListByType();
+		deck = new LinkedList<T>();
+		discarded = new ArrayList<T>();
 	}
 
-	public Color getColor() {
-		return color;
+	public void discard(T e) {
+		discarded.add(e);
 	}
 
-	public String getName() {
-		return name;
+	public T draw() {
+		if (deck.isEmpty()) {
+			shuffleDiscardedAndAddToDeck();
+		}
+		return deck.remove();
 	}
 
-	public void setColor(Color color) {
-		this.color = color;
-	}
-
-	public void setName(String name) {
-		this.name = name;
+	public void shuffleDiscardedAndAddToDeck() {
+		Collections.shuffle(discarded);
+		deck.addAll(discarded);
+		discarded.clear();
 	}
 }

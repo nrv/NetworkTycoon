@@ -21,7 +21,7 @@ package name.herve.networktycoon;
 /**
  * @author Nicolas HERVE
  */
-public class Resource {
+public class Resource implements Card {
 	private ResourceType type;
 
 	public Resource(ResourceType type) {

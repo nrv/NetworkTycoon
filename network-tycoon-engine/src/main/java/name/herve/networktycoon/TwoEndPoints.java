@@ -18,34 +18,40 @@
  */
 package name.herve.networktycoon;
 
-import java.awt.Color;
-
 /**
  * @author Nicolas HERVE
  */
-public class Player {
-	private String name;
-	private Color color;
-	private ResourceListByType resources;
+public abstract class TwoEndPoints {
+	private EndPoint ep1;
+	private EndPoint ep2;
 
-	public Player() {
+	public TwoEndPoints() {
 		super();
-		this.resources = new ResourceListByType();
 	}
 
-	public Color getColor() {
-		return color;
+	public TwoEndPoints(EndPoint ep1, EndPoint ep2) {
+		super();
+		this.ep1 = ep1;
+		this.ep2 = ep2;
 	}
 
-	public String getName() {
-		return name;
+	public EndPoint getEndPoint1() {
+		return ep1;
 	}
 
-	public void setColor(Color color) {
-		this.color = color;
+	public EndPoint getEndPoint2() {
+		return ep2;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public void setEndPoint1(EndPoint ep1) {
+		this.ep1 = ep1;
+	}
+
+	public void setEndPoint2(EndPoint ep2) {
+		this.ep2 = ep2;
+	}
+	
+	public double getBoardDistance() {
+		return Math.sqrt(Math.pow(ep1.getX() - ep2.getX(), 2) + Math.pow(ep1.getY() - ep2.getY(), 2));
 	}
 }

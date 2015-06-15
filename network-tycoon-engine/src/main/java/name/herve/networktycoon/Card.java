@@ -18,34 +18,8 @@
  */
 package name.herve.networktycoon;
 
-import java.awt.Color;
-
 /**
  * @author Nicolas HERVE
  */
-public class Player {
-	private String name;
-	private Color color;
-	private ResourceListByType resources;
-
-	public Player() {
-		super();
-		this.resources = new ResourceListByType();
-	}
-
-	public Color getColor() {
-		return color;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setColor(Color color) {
-		this.color = color;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
+public interface Card {
 }

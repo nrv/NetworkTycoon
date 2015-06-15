@@ -19,10 +19,9 @@
 package name.herve.networktycoon;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.LinkedList;
 import java.util.List;
+
+import name.herve.bastod.tools.GameException;
 
 /**
  * @author Nicolas HERVE
@@ -30,52 +29,63 @@ import java.util.List;
 public class Game {
 	private Board board;
 	private List<Player> players;
-	private int turn;
-	private Deque<Resource> deck;
-	private List<Resource> discarded;
-	private List<Resource> shown;
+	private CardDeck<Resource> resourcesDeck;
+	private CardDeck<Goal> goalsDeck;
+	private ResourceListFixedSize shownResources;
 
 	public Game(Board board) {
 		super();
 		this.board = board;
-		turn = 0;
-		
+
 		players = new ArrayList<Player>();
-		deck = new LinkedList<Resource>();
-		discarded = new ArrayList<Resource>();
-		shown = new ArrayList<Resource>();
+		resourcesDeck = new CardDeck<Resource>();
+		goalsDeck = new CardDeck<Goal>();
+		shownResources = new ResourceListFixedSize(5);
+	}
+
+	public void addGoal(Goal e) {
+		goalsDeck.discard(e);
 	}
 
 	public boolean addPlayer(Player e) {
 		return players.add(e);
 	}
 
-	public void addToDiscarded(Resource e) {
-		discarded.add(e);
+	public void addResource(Resource e) {
+		resourcesDeck.discard(e);
 	}
 
-	public void addToShown(Resource e) {
-		shown.add(e);
+	public Goal drawGoal() {
+		return goalsDeck.draw();
+	}
+
+	public void drawOneResourceToShown() throws GameException {
+		if (shownResources.isFull()) {
+			throw new GameException("ShownResources is full");
+		}
+
+		shownResources.addResource(resourcesDeck.draw());
 	}
 
 	public Board getBoard() {
 		return board;
-	}
-	
-	public Resource drawFromDeck() {
-		if (deck.isEmpty()) {
-			shuffleDiscardedAndAddToDeck();
-		}
-		return deck.remove();
 	}
 
 	public int getNbPlayers() {
 		return players.size();
 	}
 
-	public void shuffleDiscardedAndAddToDeck() {
-		Collections.shuffle(discarded);
-		deck.addAll(discarded);
-		discarded.clear();
+	public List<Player> getPlayers() {
+		return players;
+	}
+
+	public ResourceListFixedSize getShownResources() {
+		return shownResources;
+	}
+
+	public void returnAllShownResourcesToDeck() throws GameException {
+		while (!shownResources.isEmpty()) {
+			resourcesDeck.discard(shownResources.drawResource());
+		}
 	}
 }

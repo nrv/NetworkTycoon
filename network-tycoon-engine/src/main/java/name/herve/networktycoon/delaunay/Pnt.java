@@ -1,6 +1,6 @@
 package name.herve.networktycoon.delaunay;
 
-import name.herve.networktycoon.Node;
+import name.herve.networktycoon.EndPoint;
 
 /*
  * Copyright (c) 2005, 2007 by L. Paul Chew.
@@ -218,7 +218,7 @@ public class Pnt {
 
 	/* Pnts as vectors */
 
-	private Node node;
+	private EndPoint node;
 
 	private double[] coordinates; // The point's coordinates
 
@@ -238,7 +238,7 @@ public class Pnt {
 		node = null;
 	}
 
-	public Pnt(Node node) {
+	public Pnt(EndPoint node) {
 		this(node.getX(), node.getY());
 		this.node = node;
 	}
@@ -369,7 +369,7 @@ public class Pnt {
 		return new Pnt(result);
 	}
 
-	public Node getNode() {
+	public EndPoint getNode() {
 		return node;
 	}
 

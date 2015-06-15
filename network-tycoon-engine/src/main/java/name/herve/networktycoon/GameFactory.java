@@ -19,6 +19,7 @@
 package name.herve.networktycoon;
 
 import java.awt.Color;
+import java.util.List;
 
 
 /**
@@ -35,25 +36,39 @@ public class GameFactory {
 		Game game = new Game(board);
 		
 		for (int i = 0; i < nbPlayers; i++) {
-			Player p = new Player(i);
+			Player p = new Player();
 			p.setName("Player " + i);
 			p.setColor(DEFAULT_PLAYER_COLORS[i]);
 			game.addPlayer(p);
 		}
 		
 		createResources(game);
+		createGoals(game);
 		
 		return game;
 	}
 	
 	private void createResources(Game game) {
 		for (ResourceType rt : game.getBoard().getResourceTypes()) {
-			int nb = (int)(1.5 * game.getBoard().getTotalNbResourceType(rt));
+			int nb = (int)(2 * game.getBoard().getTotalNbResourceType(rt));
 			for (int n = 0; n < nb; n++) {
 				Resource r = new Resource(rt);
-				game.addToDiscarded(r);
+				game.addResource(r);
 			}
 		}
-		game.shuffleDiscardedAndAddToDeck();
+	}
+	
+	private void createGoals(Game game) {
+		List<EndPoint> eps = game.getBoard().getEndPoints();
+		for (int i = 0; i < eps.size() - 1; i++) {
+			for (int j = i + 1; j < eps.size(); j++) {
+				Goal g = new Goal(eps.get(i), eps.get(j));
+				int nbr = game.getBoard().getNbResourceNeeded(g);
+				if (nbr > 4) {
+					g.setNbPoints(nbr * 2);
+					game.addGoal(g);
+				}
+			}
+		}
 	}
 }

@@ -26,28 +26,28 @@ import java.util.Map.Entry;
 /**
  * @author Nicolas HERVE
  */
-public class Node implements Comparable<Node>, Iterable<Connection> {
+public class EndPoint implements Comparable<EndPoint>, Iterable<Connection> {
 	private int id;
 	private String name;
 	private float x;
 	private float y;
-	private Map<Connection, Node> connections;
+	private Map<Connection, EndPoint> connections;
 	private Object stuff;
 
-	public Node(int id, String name) {
+	public EndPoint(int id, String name) {
 		super();
 
 		this.name = name;
 		this.id = id;
-		connections = new HashMap<Connection, Node>();
+		connections = new HashMap<Connection, EndPoint>();
 	}
 
-	public void addConnection(Connection c, Node n) {
+	public void addConnection(Connection c, EndPoint n) {
 		connections.put(c, n);
 	}
 
 	@Override
-	public int compareTo(Node o) {
+	public int compareTo(EndPoint o) {
 		return id - o.id;
 	}
 
@@ -62,15 +62,15 @@ public class Node implements Comparable<Node>, Iterable<Connection> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		Node other = (Node) obj;
+		EndPoint other = (EndPoint) obj;
 		if (id != other.id) {
 			return false;
 		}
 		return true;
 	}
 
-	public Connection getConnectionTo(Node other) {
-		for (Entry<Connection, Node> e : connections.entrySet()) {
+	public Connection getConnectionTo(EndPoint other) {
+		for (Entry<Connection, EndPoint> e : connections.entrySet()) {
 			if (e.getValue().equals(other)) {
 				return e.getKey();
 			}
@@ -111,7 +111,7 @@ public class Node implements Comparable<Node>, Iterable<Connection> {
 		return result;
 	}
 
-	public boolean isConnectedTo(Node other) {
+	public boolean isConnectedTo(EndPoint other) {
 		return getConnectionTo(other) != null;
 	}
 
@@ -138,6 +138,6 @@ public class Node implements Comparable<Node>, Iterable<Connection> {
 
 	@Override
 	public String toString() {
-		return "Node [id=" + id + ", name=" + name + "]";
+		return "EndPoint [id=" + id + ", name=" + name + "]";
 	}
 }

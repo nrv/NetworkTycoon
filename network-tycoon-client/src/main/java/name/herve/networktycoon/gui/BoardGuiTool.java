@@ -38,7 +38,7 @@ import name.herve.networktycoon.Board;
 import name.herve.networktycoon.BoardFactory;
 import name.herve.networktycoon.Connection;
 import name.herve.networktycoon.ConnectionElement;
-import name.herve.networktycoon.Node;
+import name.herve.networktycoon.EndPoint;
 import name.herve.networktycoon.ResourceType;
 
 /**
@@ -115,8 +115,8 @@ public class BoardGuiTool {
 		for (Connection c : b.getNetwork().getConnections()) {
 			for (ResourceType rt : c.getResourceTypes()) {
 				g2.setColor(rt.getColor());
-				int px = (int)boardXCoordToScreen(c.getNode1().getX());
-				int py = (int)boardYCoordToScreen(c.getNode1().getY());
+				int px = (int)boardXCoordToScreen(c.getEndPoint1().getX());
+				int py = (int)boardYCoordToScreen(c.getEndPoint1().getY());
 				for (ConnectionElement ce : c.getConnectionElements(rt)) {
 					int x = (int)boardXCoordToScreen(ce.getX());
 					int y = (int)boardYCoordToScreen(ce.getY());
@@ -124,8 +124,8 @@ public class BoardGuiTool {
 					px = x;
 					py = y;
 				}
-				int x = (int)boardXCoordToScreen(c.getNode2().getX());
-				int y = (int)boardYCoordToScreen(c.getNode2().getY());
+				int x = (int)boardXCoordToScreen(c.getEndPoint2().getX());
+				int y = (int)boardYCoordToScreen(c.getEndPoint2().getY());
 				g2.drawLine(px, py, x, y);
 				AffineTransform saveXform = g2.getTransform();
 				for (ConnectionElement ce : c.getConnectionElements(rt)) {
@@ -144,7 +144,7 @@ public class BoardGuiTool {
 
 		Shape circle = new Ellipse2D.Double(0, 0, dimToScreen(2f * BoardFactory.GFX_NODE_RADIUS), dimToScreen(2f * BoardFactory.GFX_NODE_RADIUS));
 		AffineTransform saveXform = g2.getTransform();
-		for (Node n : b.getNetwork()) {
+		for (EndPoint n : b.getNetwork()) {
 			g2.setColor(Color.RED);
 			AffineTransform at = new AffineTransform();
 			at.translate(boardXCoordToScreen(n.getX() - BoardFactory.GFX_NODE_RADIUS), boardYCoordToScreen(n.getY() - BoardFactory.GFX_NODE_RADIUS));

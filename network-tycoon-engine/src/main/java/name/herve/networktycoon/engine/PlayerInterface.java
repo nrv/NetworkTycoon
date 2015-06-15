@@ -16,36 +16,28 @@
  * You should have received a copy of the GNU General Public License
  * along with Network Tycoon. If not, see <http://www.gnu.org/licenses/>.
  */
-package name.herve.networktycoon;
+package name.herve.networktycoon.engine;
 
-import java.awt.Color;
+import java.util.List;
+
+import name.herve.networktycoon.Goal;
+import name.herve.networktycoon.Player;
 
 /**
  * @author Nicolas HERVE
  */
-public class Player {
-	private String name;
-	private Color color;
-	private ResourceListByType resources;
+public abstract class PlayerInterface {
+	private Player player;
 
-	public Player() {
+	public PlayerInterface(Player player) {
 		super();
-		this.resources = new ResourceListByType();
+		this.player = player;
 	}
 
-	public Color getColor() {
-		return color;
+	public Player getPlayer() {
+		return player;
 	}
 
-	public String getName() {
-		return name;
-	}
-
-	public void setColor(Color color) {
-		this.color = color;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
+	public abstract void welcomePlayer();
+	public abstract List<Goal> chooseGoalsToKeep(List<Goal> goals, int min);
 }

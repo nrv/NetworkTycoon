@@ -18,34 +18,27 @@
  */
 package name.herve.networktycoon;
 
-import java.awt.Color;
-
 /**
  * @author Nicolas HERVE
  */
-public class Player {
-	private String name;
-	private Color color;
-	private ResourceListByType resources;
+public class Goal extends TwoEndPoints implements Card {
+	private int nbPoints;
 
-	public Player() {
-		super();
-		this.resources = new ResourceListByType();
+	public Goal(EndPoint ep1, EndPoint ep2) {
+		super(ep1, ep2);
 	}
 
-	public Color getColor() {
-		return color;
+	public int getNbPoints() {
+		return nbPoints;
 	}
 
-	public String getName() {
-		return name;
+	public void setNbPoints(int nbPoints) {
+		this.nbPoints = nbPoints;
 	}
 
-	public void setColor(Color color) {
-		this.color = color;
+	@Override
+	public String toString() {
+		return "Goal [" + getEndPoint1().getName() + " - " + getEndPoint2().getName() + ", " + nbPoints + "]";
 	}
 
-	public void setName(String name) {
-		this.name = name;
-	}
 }
