@@ -23,7 +23,7 @@ import name.herve.bastod.tools.GameException;
 /**
  * @author Nicolas HERVE
  */
-public class ResourceListFixedSize extends ResourceList {
+public class ResourceListFixedSize extends ResourceList implements NetworkSerializable {
 	private Resource[] resources;
 
 	public ResourceListFixedSize(int size) {
@@ -117,5 +117,11 @@ public class ResourceListFixedSize extends ResourceList {
 		}
 		sb.append("]");
 		return sb.toString();
+	}
+
+	@Override
+	public String serialize() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

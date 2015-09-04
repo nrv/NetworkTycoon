@@ -21,7 +21,7 @@ package name.herve.networktycoon;
 /**
  * @author Nicolas HERVE
  */
-public class Goal extends TwoEndPoints implements Card {
+public class Goal extends TwoEndPoints implements Card, NetworkSerializable {
 	private int nbPoints;
 
 	public Goal(EndPoint ep1, EndPoint ep2) {
@@ -39,6 +39,12 @@ public class Goal extends TwoEndPoints implements Card {
 	@Override
 	public String toString() {
 		return "Goal [" + getEndPoint1().getName() + " - " + getEndPoint2().getName() + ", " + nbPoints + "]";
+	}
+
+	@Override
+	public String serialize() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

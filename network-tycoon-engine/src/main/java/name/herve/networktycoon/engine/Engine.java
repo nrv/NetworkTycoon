@@ -20,83 +20,112 @@ package name.herve.networktycoon.engine;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import name.herve.bastod.tools.GameException;
 import name.herve.networktycoon.Game;
 import name.herve.networktycoon.Goal;
 import name.herve.networktycoon.Player;
 import name.herve.networktycoon.ResourceListFixedSize;
+import name.herve.networktycoon.model.EnginePlayer;
 
 /**
  * @author Nicolas HERVE
  */
-public class Engine {
+public class Engine implements GameEventListener {
 	private Game game;
-	private BoardInterface bi;
-	private Map<Player, PlayerInterface> pis;
-	private List<Player> orderedPlayers;
+	private List<EnginePlayer> orderedPlayers;
 	private int currentPlayer;
 
 	public Engine() {
 		super();
 	}
 
-	public void start(Game game, BoardInterface bi) throws GameException {
-		this.game = game;
-		this.bi = bi;
-		bi.setBoard(game.getBoard());
-
-		fillShownResources();
-		
-		pis = new HashMap<Player, PlayerInterface>();
-
-		orderedPlayers = new ArrayList<Player>();
-		currentPlayer = -1;
-		
-		for (Player p : game.getPlayers()) {
-			PlayerInterface pi = bi.getPlayerInterface(p);
-			pis.put(p, pi);
-			pi.welcomePlayer();
-			orderedPlayers.add(p);
-			List<Goal> potentialGoals = new ArrayList<Goal>();
-			for (int i = 0; i < 3; i++) {
-				potentialGoals.add(game.drawGoal());
-			}
-			List<Goal> keptGoals = pi.chooseGoalsToKeep(potentialGoals, 2);
+	public void eventDispatch(GameEvent event) {
+		for (EnginePlayer p : orderedPlayers) {
+			eventSend(event, p);
 		}
-		
-		Collections.shuffle(orderedPlayers);
 	}
-	
-	public Player getNextPlayer() {
-		currentPlayer++;
-		
-		if (currentPlayer >= orderedPlayers.size()) {
-			currentPlayer = 0;
+
+	public void eventDispatchExcept(GameEvent event, EnginePlayer exception) {
+		for (EnginePlayer p : orderedPlayers) {
+			if (p != exception) {
+				eventSend(event, p);
+			}
 		}
-		
-		return orderedPlayers.get(currentPlayer);
+	}
+
+	public void eventSend(GameEvent event, EnginePlayer p) {
+		PlayerInterface pi = p.getPlayerInterface();
+		if (pi != null) {
+			pi.processGameEvent(event);
+		}
 	}
 
 	private void fillShownResources() throws GameException {
 		ResourceListFixedSize rs = game.getShownResources();
 		while (!rs.isFull()) {
 			while (!rs.isFull()) {
-				drawOneResourceToShown();
+				game.drawOneResourceToShown();
 			}
 			if (rs.getNbJocker() >= 3) {
-				bi.warningTooManyJockersInShownResources();
 				game.returnAllShownResourcesToDeck();
+				eventDispatch(GameEvent.message("Too many jockers, changing resources deck"));
 			}
+		}
+		eventDispatch(GameEvent.resourceDeckChanged(game.getShownResources()));
+	}
+
+	private boolean gameEnded() {
+		return false;
+	}
+
+	private Player getNextPlayer() {
+		currentPlayer++;
+
+		if (currentPlayer >= orderedPlayers.size()) {
+			currentPlayer = 0;
+		}
+
+		return orderedPlayers.get(currentPlayer);
+	}
+
+	public void init(Game game) throws GameException {
+		this.game = game;
+
+		fillShownResources();
+
+		orderedPlayers = new ArrayList<EnginePlayer>();
+		currentPlayer = -1;
+
+		for (EnginePlayer p : game.getPlayers()) {
+			eventSend(GameEvent.message("Welcome " + p.getName()), p);
+			orderedPlayers.add(p);
+
+			List<Goal> potentialGoals = new ArrayList<Goal>();
+			for (int i = 0; i < 3; i++) {
+				potentialGoals.add(game.drawGoal());
+			}
+			eventSend(GameEvent.chooseGoals(potentialGoals, 2), p);
+		}
+
+		Collections.shuffle(orderedPlayers);
+	}
+
+	public void loop() throws GameException {
+		while (!gameEnded()) {
+			playerTurn(getNextPlayer());
 		}
 	}
 
-	public void drawOneResourceToShown() throws GameException {
-		game.drawOneResourceToShown();
-		bi.updateShownResources(game.getShownResources());
+	private void playerTurn(Player p) throws GameException {
+		eventDispatch(GameEvent.playerTurn(p));
+	}
+
+	@Override
+	public void processGameEvent(GameEvent e) {
+		// TODO Auto-generated method stub
+
 	}
 
 }

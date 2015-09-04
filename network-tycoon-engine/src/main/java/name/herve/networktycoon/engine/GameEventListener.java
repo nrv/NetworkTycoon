@@ -18,17 +18,10 @@
  */
 package name.herve.networktycoon.engine;
 
-import name.herve.networktycoon.Player;
 
 /**
  * @author Nicolas HERVE
  */
-public abstract class PlayerAction {
-	private Player player;
-
-	public PlayerAction(Player player) {
-		super();
-		this.player = player;
-	}
-
+public interface GameEventListener {
+	void processGameEvent(GameEvent e);
 }

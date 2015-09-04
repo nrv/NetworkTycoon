@@ -21,6 +21,8 @@ package name.herve.networktycoon;
 import java.awt.Color;
 import java.util.List;
 
+import name.herve.networktycoon.model.EnginePlayer;
+
 
 /**
  * @author Nicolas HERVE
@@ -36,7 +38,7 @@ public class GameFactory {
 		Game game = new Game(board);
 		
 		for (int i = 0; i < nbPlayers; i++) {
-			Player p = new Player();
+			EnginePlayer p = new EnginePlayer();
 			p.setName("Player " + i);
 			p.setColor(DEFAULT_PLAYER_COLORS[i]);
 			game.addPlayer(p);

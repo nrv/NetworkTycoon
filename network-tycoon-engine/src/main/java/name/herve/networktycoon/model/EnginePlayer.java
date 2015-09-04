@@ -16,14 +16,21 @@
  * You should have received a copy of the GNU General Public License
  * along with Network Tycoon. If not, see <http://www.gnu.org/licenses/>.
  */
-package name.herve.networktycoon;
+package name.herve.networktycoon.model;
 
-import java.awt.Color;
+import name.herve.networktycoon.engine.PlayerInterface;
 
 /**
  * @author Nicolas HERVE
  */
-public interface Player extends NetworkSerializable {
-	public Color getColor();
-	public String getName();
+public class EnginePlayer extends ClientPlayer {
+	private PlayerInterface playerInterface;
+
+	public PlayerInterface getPlayerInterface() {
+		return playerInterface;
+	}
+
+	public void setPlayerInterface(PlayerInterface playerInterface) {
+		this.playerInterface = playerInterface;
+	}
 }

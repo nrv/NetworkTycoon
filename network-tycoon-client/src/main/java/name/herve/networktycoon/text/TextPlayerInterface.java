@@ -13,7 +13,7 @@ public class TextPlayerInterface extends PlayerInterface {
 	}
 
 	@Override
-	public List<Goal> chooseGoalsToKeep(List<Goal> goals, int min) {
+	public List<Goal> actionChooseGoalsToKeep(List<Goal> goals, int min) {
 		out("choose at least " + min + " goals :");
 		for (Goal g : goals) {
 			out(" - " + g);
@@ -25,9 +25,6 @@ public class TextPlayerInterface extends PlayerInterface {
 		TextInterface.out("Player - " + getPlayer().getName() + " : " + msg);
 	}
 
-	@Override
-	public void welcomePlayer() {
-		out("welcome !");
-	}
+
 
 }

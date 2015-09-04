@@ -20,7 +20,6 @@ package name.herve.networktycoon;
 
 import name.herve.bastod.tools.GameException;
 import name.herve.networktycoon.engine.Engine;
-import name.herve.networktycoon.text.TextBoardInterface;
 
 
 /**
@@ -35,10 +34,14 @@ public class TestTextGame {
 			bf.setSeed(7000);
 			GameFactory gf = new GameFactory();
 			Game g = gf.createGame(bf.getRandomBoard(), 2);
-			TextBoardInterface bi = new TextBoardInterface();
+			
+			for (Player p : g.getPlayers()) {
+				p.
+			}
 			
 			Engine engine = new Engine();
-			engine.start(g, bi);
+			engine.init(g);
+			engine.loop();
 			
 		} catch (GameException e) {
 			e.printStackTrace();

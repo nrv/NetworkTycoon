@@ -26,7 +26,7 @@ import name.herve.networktycoon.Player;
 /**
  * @author Nicolas HERVE
  */
-public abstract class PlayerInterface {
+public abstract class PlayerInterface implements GameEventListener {
 	private Player player;
 
 	public PlayerInterface(Player player) {
@@ -34,10 +34,23 @@ public abstract class PlayerInterface {
 		this.player = player;
 	}
 
+	public abstract List<Goal> actionChooseGoalsToKeep(List<Goal> goals, int min);
+
 	public Player getPlayer() {
 		return player;
 	}
 
-	public abstract void welcomePlayer();
-	public abstract List<Goal> chooseGoalsToKeep(List<Goal> goals, int min);
+	public abstract void displayMessage(String msg);
+
+	@Override
+	public void processGameEvent(GameEvent e) {
+		switch (e.getType()) {
+		case SRV_MESSAGE:
+			displayMessage((String)e.getObject());
+			break;
+		case SRV_PLAYER_TURN:
+			Player p = (Player) e.getObject();
+			break;
+		}
+	}
 }

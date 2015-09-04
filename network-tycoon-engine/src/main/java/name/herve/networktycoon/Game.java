@@ -22,13 +22,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import name.herve.bastod.tools.GameException;
+import name.herve.networktycoon.model.EnginePlayer;
 
 /**
  * @author Nicolas HERVE
  */
 public class Game {
 	private Board board;
-	private List<Player> players;
+	private List<EnginePlayer> players;
 	private CardDeck<Resource> resourcesDeck;
 	private CardDeck<Goal> goalsDeck;
 	private ResourceListFixedSize shownResources;
@@ -37,7 +38,7 @@ public class Game {
 		super();
 		this.board = board;
 
-		players = new ArrayList<Player>();
+		players = new ArrayList<EnginePlayer>();
 		resourcesDeck = new CardDeck<Resource>();
 		goalsDeck = new CardDeck<Goal>();
 		shownResources = new ResourceListFixedSize(5);
@@ -47,7 +48,7 @@ public class Game {
 		goalsDeck.discard(e);
 	}
 
-	public boolean addPlayer(Player e) {
+	public boolean addPlayer(EnginePlayer e) {
 		return players.add(e);
 	}
 
@@ -75,7 +76,7 @@ public class Game {
 		return players.size();
 	}
 
-	public List<Player> getPlayers() {
+	public List<EnginePlayer> getPlayers() {
 		return players;
 	}
 

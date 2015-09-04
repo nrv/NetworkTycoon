@@ -18,12 +18,10 @@
  */
 package name.herve.networktycoon;
 
-import java.awt.Color;
 
 /**
  * @author Nicolas HERVE
  */
-public interface Player extends NetworkSerializable {
-	public Color getColor();
-	public String getName();
+public interface NetworkSerializable {
+	String serialize();
 }
